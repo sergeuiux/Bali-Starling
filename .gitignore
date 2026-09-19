@@ -1,0 +1,14 @@
+node_modules/
+dist/
+scripts/_tmp/
+.DS_Store
+access.md
+
+# Исходные видео (тяжёлые) — нарезаются в public/frames/
+assets/*.mp4
+
+# Рабочие материалы из Figma (макеты, экспортированные ассеты)
+Screen/
+Video/
+Images/
+Svg/

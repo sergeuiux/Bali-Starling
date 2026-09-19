@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0067c7" />
+    <title>Jalak — The last endemic vertebrate on Bali</title>
+    <meta name="description" content="Leucopsar rothschildi. Story about a bird. A law no government wrote. And the island that chose to keep it." />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/poppins-700.woff2" crossorigin />
+    <link rel="stylesheet" href="/src/styles/main.css" />
+  </head>
+  <body>
+    <!-- ============ PRELOADER ============ -->
+    <div class="preloader" id="preloader" aria-hidden="true">
+      <div class="preloader__logo">
+        <img src="/logo.svg" width="48" height="48" alt="" style="filter: brightness(0) invert(1);" />
+      </div>
+      <div class="preloader__bar"><span class="preloader__fill" id="preloaderFill"></span></div>
+      <div class="preloader__meta">
+        <span class="preloader__label">Leucopsar rothschildi</span>
+        <span class="preloader__pct" id="preloaderPct">0%</span>
+      </div>
+    </div>
+
+    <!-- ============ SITE ============ -->
+    <div class="site" id="site">
+      <!-- Линейки-шкалы у краёв (fixed). Штрихи бегут по скроллу, цвет
+           инвертируется по фону (mix-blend-mode: difference). -->
+      <div class="ruler ruler--l" data-ruler aria-hidden="true"></div>
+      <div class="ruler ruler--r" data-ruler aria-hidden="true"></div>
+
+      <!-- ================ STICKY NAV ================
+           mix-blend-mode: difference — цвет элементов инвертируется по фону
+           (белый над видео, тёмный над светлой панелью секции 2).
+           Пилюля PLAY SONG вынесена из blend (собственный слой). -->
+      <header class="site-nav" id="siteNav">
+        <a href="#" class="logo" aria-label="Jalak — home">
+          <img src="/logo-circle.svg" width="44" height="44" alt="" />
+        </a>
+
+        <!-- Меню: один слой пунктов. Заливка плашки и цвет пунктов переключаются
+             по теме секции под строкой меню (тёмная #0E1219 / светлая #F2F7FD /
+             прозрачная на секции 1). -->
+        <div class="site-nav__menu-wrap">
+          <nav class="site-nav__menu" aria-label="Sections">
+            <a href="#section-two" data-nav="about"><span>About&nbsp;the&nbsp;Bird</span><span aria-hidden="true">About&nbsp;the&nbsp;Bird</span></a>
+            <a href="#section-three" data-nav="collapse"><span>Collapse</span><span aria-hidden="true">Collapse</span></a>
+            <a href="#section-island" data-nav="island"><span>Island</span><span aria-hidden="true">Island</span></a>
+            <a href="#section-law" data-nav="law"><span>Law</span><span aria-hidden="true">Law</span></a>
+            <a href="#section-park" data-nav="numbers"><span>Numbers</span><span aria-hidden="true">Numbers</span></a>
+          </nav>
+        </div>
+
+        <button class="song-toggle" data-sound-toggle type="button" aria-pressed="false" aria-label="Play bird song">
+          <span class="song-toggle__ico" aria-hidden="true">
+            <svg class="song-toggle__ico-play" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+              <path d="M8 16A8 8 0 108 0a8 8 0 000 16zM6.565 11.026c-.361.22-.769.047-.769-.329V5.3c0-.36.431-.517.769-.321l4.408 2.611c.321.189.329.636 0 .832l-4.408 2.604z" fill="currentColor"/>
+            </svg>
+            <svg class="song-toggle__ico-pause" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+              <path d="M8 16A8 8 0 108 0a8 8 0 000 16zM5.6 5.2a.4.4 0 01.8 0v5.6a.4.4 0 01-.8 0V5.2zm3.2 0a.4.4 0 01.8 0v5.6a.4.4 0 01-.8 0V5.2z" fill="currentColor"/>
+            </svg>
+          </span>
+          <span class="song-toggle__label"><span>Play song</span><span aria-hidden="true">Play song</span></span>
+          <span class="song-toggle__bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        </button>
+
+        <!-- Бургер — только на мобилке -->
+        <button class="nav-burger" type="button" aria-label="Menu" aria-expanded="false" data-burger>
+          <i></i><i></i><i></i>
+        </button>
+
+        <!-- Линия под меню (нижняя граница плашки). Цвет переключается по теме. -->
+        <div class="site-nav__line" aria-hidden="true"></div>
+      </header>
+
+      <!-- Мобильное меню (по бургеру) — белый оверлей -->
+      <div class="mobile-menu" data-mobile-menu aria-hidden="true">
+        <div class="mobile-menu__top">
+          <a href="#" class="mobile-menu__logo" aria-label="Jalak — home"><img src="/logo.svg" width="32" height="32" alt="" /></a>
+          <button class="mobile-menu__close" data-menu-close type="button" aria-label="Close menu">
+            <img src="/close.svg" width="24" height="24" alt="" />
+          </button>
+        </div>
+        <nav class="mobile-menu__nav">
+          <a href="#section-two" data-nav="about">About the Bird</a>
+          <a href="#section-three" data-nav="collapse">Collapse</a>
+          <a href="#section-island" data-nav="island">Island</a>
+          <a href="#section-law" data-nav="law">Law</a>
+          <a href="#section-park" data-nav="numbers">Numbers</a>
+        </nav>
+        <button class="song-toggle song-toggle--mobile" data-sound-toggle-m type="button" aria-pressed="false" aria-label="Play bird song">
+          <span class="song-toggle__ico" aria-hidden="true">
+            <svg class="song-toggle__ico-play" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+              <path d="M8 16A8 8 0 108 0a8 8 0 000 16zM6.565 11.026c-.361.22-.769.047-.769-.329V5.3c0-.36.431-.517.769-.321l4.408 2.611c.321.189.329.636 0 .832l-4.408 2.604z" fill="currentColor"/>
+            </svg>
+            <svg class="song-toggle__ico-pause" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+              <path d="M8 16A8 8 0 108 0a8 8 0 000 16zM5.6 5.2a.4.4 0 01.8 0v5.6a.4.4 0 01-.8 0V5.2zm3.2 0a.4.4 0 01.8 0v5.6a.4.4 0 01-.8 0V5.2z" fill="currentColor"/>
+            </svg>
+          </span>
+          <span class="song-toggle__label"><span>Play song</span><span aria-hidden="true">Play song</span></span>
+          <span class="song-toggle__bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        </button>
+      </div>
+      <audio id="birdSong" preload="auto" loop playsinline src="/audio/starling.mp3"></audio>
+
+      <!-- ================ SECTION 1 — full-screen video (bird flies away) ================ -->
+      <section class="s1" id="section-one">
+        <canvas class="s1__canvas" id="stageOne"></canvas>
+        <!-- Мобилка: статичная картинка вместо покадрового видео (легче загрузка). -->
+        <img class="s1__poster" src="/img/s1-mobile.webp" alt="Bali starling" />
+        <div class="s1__overlay" aria-hidden="true"></div>
+
+        <div class="s1__content">
+          <h1 class="s1__title" data-split>The last endemic vertebrate on&nbsp;Bali</h1>
+          <div class="s1__bottom" data-reveal>
+            <p class="s1__subtitle">
+              Story about a bird. A law no government<br>wrote. And the island that chose to keep it.
+            </p>
+            <div class="btn-read-wrap">
+              <button class="btn-read" type="button">
+                <span class="btn-read__label">Read the story</span>
+                <span class="btn-read__arrow" aria-hidden="true">
+                  <svg viewBox="0 0 16 16" width="16" height="16" fill="none">
+                    <path d="M13 11L8 15L3 11M8 15V1" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================ SECTION 2 — split: video (bird arrives) + light panel ================ -->
+      <section class="s2" id="section-two">
+        <div class="s2__media">
+          <canvas class="s2__canvas" id="stageTwo"></canvas>
+          <!-- Мобилка: статичная картинка вместо покадрового видео. Появляется из шторки. -->
+          <img class="s2__poster" src="/img/s2-mobile.webp" alt="Bali starling" />
+          <div class="s2__fade" aria-hidden="true"></div>
+          <div class="s2__corners" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        </div>
+
+        <div class="s2__panel">
+          <div class="s2__head">
+            <div class="s2__title-row">
+              <h2 class="s2__title" data-split>Lives nowhere<br>else on earth</h2>
+              <img class="s2__mark" src="/img/bali.svg" width="95" height="61" alt="Bali" data-reveal />
+            </div>
+            <p class="s2__subtitle" data-reveal>
+              Leucopsar rothschildi. Described 1912.<br>Critically Endangered ever since.
+            </p>
+          </div>
+
+          <div class="s2__facts" data-s2-facts>
+            <div class="s2__fact s2__fact--symbol">
+              <div class="s2__coins" aria-hidden="true">
+                <img class="s2__coin" src="/img/coin.webp" width="64" height="64" alt="" loading="lazy" />
+                <img class="s2__coin" src="/img/coin-image.webp" width="64" height="64" alt="" loading="lazy" />
+              </div>
+              <div class="s2__fact-main">
+                <div class="s2__fact-value">The&nbsp;symbol</div>
+                <div class="s2__fact-label">of Bali and was featured<br>on the 200–rupiah coin</div>
+              </div>
+            </div>
+
+            <div class="s2__fact">
+              <div class="s2__fact-label">Almost entirely</div>
+              <div class="s2__fact-value">white</div>
+            </div>
+
+            <div class="s2__fact">
+              <div class="s2__fact-value s2__fact-value--num">25<span class="s2__unit">cm.</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================ SECTION 3 — collapse: счётчик + стая птичек ================
+           Наезжает поверх секции 2. При касании верха фиксируется и 3 сек играет
+           авто-анимация (счётчик 309→6 / 1990→2021, птички гаснут вразнобой до 6,
+           затем 6 съезжаются в линию по центру). Далее по скроллу — затемнение,
+           инверсия и уезд птичек вверх (без роста и растяжки). -->
+      <section class="s3" id="section-three">
+        <!-- Счётчики -->
+        <div class="s3__counters">
+          <div class="s3__count s3__count--left">
+            <p class="s3__count-big">Only <span class="s3__count-num" data-s3-big>309</span></p>
+            <p class="s3__count-cap">birds</p>
+          </div>
+          <div class="s3__count s3__count--right">
+            <p class="s3__count-cap">survived into</p>
+            <p class="s3__count-big"><span class="s3__count-num" data-s3-year>1990</span></p>
+          </div>
+        </div>
+
+        <!-- Стая птичек (иконки генерируются в JS под ширину экрана) -->
+        <div class="s3__flock" data-s3-flock aria-hidden="true"></div>
+
+        <!-- ===== Мобильная версия (макет 372:4641 / 7709 / 9355) =====
+             Компактный счётчик сверху + сетка птичек в кружках-лунках. Птички
+             гаснут по скроллу (кружки остаются), счётчик 309→6 / 1990→2001,
+             6 выживших в центральной колонке; в финале фон темнеет. -->
+        <div class="s3m__counter" aria-hidden="true">
+          <div class="s3m__row">
+            <p class="s3m__only">Only <span class="s3__count-num" data-s3m-big>309</span></p>
+            <p class="s3m__year s3__count-num"><span data-s3m-year>1990</span></p>
+          </div>
+          <div class="s3m__cap-row">
+            <p class="s3m__cap">birds survived into</p>
+            <span class="s3m__cap-line" aria-hidden="true"></span>
+          </div>
+        </div>
+        <div class="s3m__flock" data-s3m-flock aria-hidden="true"></div>
+      </section>
+
+      <!-- ================ SECTION 4 — «Six known wild birds» (по мотивам Bali Starling) ================ -->
+      <section class="s4" id="section-four" aria-label="Six known wild birds">
+        <div class="s4__pad">
+          <div class="s4__head">
+            <h2 class="s4__title" data-split>
+              <span class="s4__title-accent">Six known</span> wild&nbsp;birds.
+            </h2>
+            <p class="s4__sub" data-reveal>Forty-three years of legal protection.</p>
+          </div>
+
+          <div class="s4__col" data-reveal>
+            <p class="s4__quote">
+              The ban did not protect the bird.
+              <span class="s4__quote-accent">It priced it.</span>
+            </p>
+            <p class="s4__desc">
+              In the 1990s, a pair fetched up to 40 million rupiah on the black market. Years of a park ranger's salary. Enforcement across thousands of islands was a losing game. And for some, owning one illegally was the whole point.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================ SECTION 5 — Island split (карта слева / текст справа) ================
+           Макет Figma node 293:1739 (5-4..5-6). Пинится. Экран делится по центру (50vw):
+           слева фрейм карты (20px слева, 60px под заголовком, до центра, 20px снизу),
+           справа — текст. Подписи Bali/Nusa Penida статичны во фрейме карты. По скроллу
+           карта увеличивается и едет вверх; путь приякорен к карте (едет и зумится с ней),
+           геометрия пути — точная из макета. В конце проявляется «And all the villages
+           agreed to help». -->
+      <section class="s5" id="section-island" aria-label="Indonesia has more than 17,000 islands">
+        <div class="s5__head">
+          <h2 class="s5__title" data-split>Indonesia has more than <span class="s5__num">17,000</span> islands</h2>
+          <p class="s5__sub" data-reveal>But these birds are found only here</p>
+        </div>
+
+        <!-- линии-рамки: горизонтальные (y284 / y790) и вертикальный центр (50vw) -->
+        <span class="s5__hline s5__hline--top" aria-hidden="true"></span>
+        <span class="s5__hline s5__hline--bot" aria-hidden="true"></span>
+        <span class="s5__vline" aria-hidden="true"></span>
+
+        <!-- ЛЕВО: фрейм карты -->
+        <div class="s5__frame">
+          <!-- Слой карты: размер/позиция задаются в JS относительно фрейма (кадр 5-4).
+               Трансформируется (translate+scale) по скроллу. Путь — внутри, в натуральных
+               координатах карты (едет и зумится вместе с ней). -->
+          <div class="s5__map" data-s5-map>
+            <svg class="s5__svg" viewBox="0 0 3842 2381" preserveAspectRatio="none">
+              <defs>
+                <!-- clip раскрывает оранжевый пунктир до X текущей точки маршрута -->
+                <clipPath id="s5trailClip"><rect data-s5-clip x="0" y="0" width="0" height="2381" /></clipPath>
+              </defs>
+              <image href="/img/map.webp" x="0" y="0" width="3842" height="2381" />
+
+              <!-- Путь (точная геометрия из макета 293:1873): белый пунктир (весь маршрут),
+                   оранжевый пунктирный след (до точки) и сплошной оранжевый (проявляется
+                   в конце). Все клипаются до X текущей точки. -->
+              <path class="s5__route" data-s5-route
+                    d="M2594 1802 C2740 1751 2775 1902 2918 1736 C3087 1541 3126 1687 3219 1761"
+                    fill="none" />
+              <path class="s5__trail" data-s5-trail clip-path="url(#s5trailClip)"
+                    d="M2594 1802 C2740 1751 2775 1902 2918 1736 C3087 1541 3126 1687 3219 1761"
+                    fill="none" />
+              <path class="s5__trail-solid" data-s5-trail-solid clip-path="url(#s5trailClip)"
+                    d="M2594 1802 C2740 1751 2775 1902 2918 1736 C3087 1541 3126 1687 3219 1761"
+                    fill="none" />
+
+              <!-- Точка старта (берег Бали) -->
+              <circle class="s5__start" data-s5-start cx="2582" cy="1807" r="8" />
+
+              <!-- Бегущая точка с пульсирующим кольцом -->
+              <g class="s5__marker" data-s5-marker>
+                <circle class="s5__marker-ring" r="30" />
+                <circle class="s5__marker-core" r="13" />
+                <circle class="s5__marker-dot" r="4" />
+              </g>
+            </svg>
+          </div>
+
+          <!-- градиент поверх карты (под подписями) -->
+          <div class="s5__grad" aria-hidden="true"></div>
+
+          <!-- уголки фрейма (30px от краёв), как в секции 2 -->
+          <div class="s5__corners" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+
+          <!-- Статичные подписи островов -->
+          <span class="s5__label s5__label--bali">Bali</span>
+          <span class="s5__label s5__label--np">Nusa Penida</span>
+        </div>
+
+        <!-- ПРАВО: текст (flex column, space-between) -->
+        <div class="s5__side">
+          <p class="s5__lead" data-reveal>The veterinarian<br><span class="s5__result-accent">who started it all</span></p>
+          <div class="s5__p2wrap">
+            <p class="s5__p2" data-reveal>In the early 2000s, veterinarian Bayu Virayudha went from village<br>to village across Nusa Penida. He met people at weddings,<br>ceremonies, and community gatherings. He explained the<br>problem and asked for their support.</p>
+            <p class="s5__result" data-s5-result><span>And all the villages </span><span class="s5__result-accent">agreed to help</span></p>
+          </div>
+        </div>
+
+        <!-- ===== Мобильная версия (макет 372:13593) — карта с анимацией пути ===== -->
+        <div class="s5m" aria-hidden="true">
+          <div class="s5m__head">
+            <h2 class="s5m__title" data-split>Indonesia has more than <span class="s5__num">17,000</span> islands</h2>
+            <p class="s5m__sub" data-reveal>But these birds are found only here</p>
+          </div>
+
+          <div class="s5m__map" data-s5m-map>
+            <img class="s5m__img" src="/img/map.webp" alt="" />
+            <div class="s5m__grad" aria-hidden="true"></div>
+            <svg class="s5m__svg" viewBox="0 0 320 231" preserveAspectRatio="none">
+              <defs>
+                <clipPath id="s5mTrailClip"><rect data-s5m-clip x="0" y="0" width="0" height="231" /></clipPath>
+              </defs>
+              <!-- весь маршрут (белый пунктир) -->
+              <path class="s5m__route" data-s5m-route
+                    d="M87.64 120.38 C107.79 113.30 110.67 134.51 130.52 111.55 C153.83 84.58 159.23 104.70 172.12 114.98"
+                    fill="none" />
+              <!-- оранжевый след — раскрывается clip до X точки -->
+              <path class="s5m__trail" data-s5m-trail clip-path="url(#s5mTrailClip)"
+                    d="M87.64 120.38 C107.79 113.30 110.67 134.51 130.52 111.55 C153.83 84.58 159.23 104.70 172.12 114.98"
+                    fill="none" />
+              <circle class="s5m__start" cx="83.5" cy="121.6" r="2.6" />
+              <g class="s5m__marker" data-s5m-marker>
+                <circle class="s5m__marker-ring" r="6" />
+                <circle class="s5m__marker-core" r="2.6" />
+                <circle class="s5m__marker-dot" r="0.9" />
+              </g>
+            </svg>
+            <span class="s5m__label s5m__label--bali">Bali</span>
+            <span class="s5m__label s5m__label--np">Nusa Penida</span>
+            <div class="s5m__corners" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          </div>
+
+          <div class="s5m__text">
+            <p class="s5m__p" data-reveal>In the early 2000s, Balinese veterinarian Bayu Virayudha traveled to every village on Nusa Penida.</p>
+            <p class="s5m__p" data-reveal>Not government officials. Villages. Weddings, ceremonies, gatherings. He explained his idea and asked for letters of support.</p>
+            <p class="s5m__result" data-s5m-result>And all the villages <span class="s5__result-accent">agreed to help</span></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================ SECTION 6 — Awig-awig (макет 189:10764) ================
+           Пинится. Фон тёмный→светлый по скроллу. Два слова AWIG слева/справа сходятся
+           к центру; между ними карточка-картинка растёт и кроссфейдит 5 фото. Текст —
+           тёмный/белый (по фону), белый там где перекрывает картинку (clip). Внизу абзац. -->
+      <section class="s6" id="section-law" aria-label="Awig-awig — customary law">
+        <!-- Сцена (слова + карточка). На десктопе display:contents — обёртка «прозрачна»,
+             механика с пином как раньше. На мобилке — блок фикс. высоты (= карточка на
+             пике), под ним абзац в потоке (30px), анимация по скроллу без пина. -->
+        <div class="s6__stage" data-s6-stage>
+          <!-- градиент-маски по краям (затухание слов) -->
+          <span class="s6__edge s6__edge--l" aria-hidden="true"></span>
+          <span class="s6__edge s6__edge--r" aria-hidden="true"></span>
+
+          <!-- базовые слова (цвет по фону: белый на тёмном → тёмный на светлом) -->
+          <div class="s6__words" data-s6-words>
+            <span class="s6__word" data-s6-wl>AWIG</span>
+            <span class="s6__word" data-s6-wr>AWIG</span>
+          </div>
+
+          <!-- карточка-картинка (5 фото, кроссфейд) -->
+          <div class="s6__card" data-s6-card>
+            <img class="s6__photo" src="/img/avig/1.webp" alt="" data-s6-photo />
+            <img class="s6__photo" src="/img/avig/2.webp" alt="" data-s6-photo />
+            <img class="s6__photo" src="/img/avig/3.webp" alt="" data-s6-photo />
+            <img class="s6__photo" src="/img/avig/4.webp" alt="" data-s6-photo />
+            <img class="s6__photo" src="/img/avig/5.webp" alt="" data-s6-photo />
+          </div>
+
+          <!-- белые слова поверх карточки, обрезаются по её прямоугольнику (clip в JS) -->
+          <div class="s6__words s6__words--light" data-s6-words-light>
+            <span class="s6__word" data-s6-wl2>AWIG</span>
+            <span class="s6__word" data-s6-wr2>AWIG</span>
+          </div>
+        </div>
+
+        <p class="s6__caption" data-s6-caption>Awig-awig is Hindu customary law.<br>It is established by the community, not the government.<br>By breaking it, you haven&rsquo;t broken the law. You&rsquo;ve broken a promise<br>that everyone made to each other. And that is more serious.</p>
+      </section>
+
+      <!-- ================ SECTION «Community / What happens if you break the law» (макет 359:14059 / hover 359:14?) ================
+           Светлая секция 100vh под awig-awig. Делится пополам центральной линией (50%).
+           СЛЕВА: заголовок «Community decided to protect the bird», под ним подпись
+           «What happens if you break the law» (16px/700), затем 4 строки-полоски в левой
+           половине (от линии 20px до центра). Hover: плашка чернеет и растёт до линий
+           (20px…центр), текст белеет, цифра остаётся оранжевой. СПРАВА: фото деревни
+           (bento-2) с параллаксом — по скроллу едет вверх внутри фрейма. -->
+      <section class="sbl" id="section-breaklaw" aria-label="Community decided to protect the bird">
+        <span class="sbl__vline" aria-hidden="true"></span>
+
+        <div class="sbl__head">
+          <h2 class="sbl__title" data-split>Community decided<br>to protect <span class="sbl__accent">the&nbsp;bird</span></h2>
+        </div>
+        <p class="sbl__note">Enforcement doesn&rsquo;t wait for a ranger.<br>Everyone in the village is watching.</p>
+        <p class="sbl__kicker">What happens if you <span class="sbl__accent">break&nbsp;the&nbsp;law</span></p>
+
+        <div class="sbl__rows" data-sbl-rows>
+          <div class="sbl__row" data-sbl-row data-idx="0">
+            <span class="sbl__fill" aria-hidden="true"></span>
+            <span class="sbl__text">
+              <span class="sbl__num">(01)</span>
+              <span class="sbl__ct">Break awig-awig<br>and you pay a fine.</span>
+            </span>
+          </div>
+          <div class="sbl__row" data-sbl-row data-idx="1">
+            <span class="sbl__fill" aria-hidden="true"></span>
+            <span class="sbl__text">
+              <span class="sbl__num">(02)</span>
+              <span class="sbl__ct">Then you feed the<br>entire village.</span>
+            </span>
+          </div>
+          <div class="sbl__row" data-sbl-row data-idx="2">
+            <span class="sbl__fill" aria-hidden="true"></span>
+            <span class="sbl__text">
+              <span class="sbl__num">(03)</span>
+              <span class="sbl__ct">If anyone refuses your<br>food, you pay them cash.</span>
+            </span>
+          </div>
+          <div class="sbl__row" data-sbl-row data-idx="3">
+            <span class="sbl__fill" aria-hidden="true"></span>
+            <span class="sbl__text">
+              <span class="sbl__num">(04)</span>
+              <span class="sbl__ct">Then you ask forgiveness<br>at the temple. Publicly.</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Правая половина (по высоте пунктов): фото деревни с параллаксом. -->
+        <div class="sbl__media">
+          <img class="sbl__img" src="/img/bento-2.webp" alt="" data-sbl-photo />
+        </div>
+
+        <!-- Видео у курсора (240×140): при наведении на пункт показывается его ролик,
+             контейнер следует за курсором (lerp). -->
+        <div class="sbl__cursorvid" data-sbl-video aria-hidden="true">
+          <video class="sbl__cv" data-cv="0" src="/video/law-1.mp4" poster="/img/poster/law-1.webp" muted loop playsinline preload="metadata"></video>
+          <video class="sbl__cv" data-cv="1" src="/video/law-2.mp4" poster="/img/poster/law-2.webp" muted loop playsinline preload="metadata"></video>
+          <video class="sbl__cv" data-cv="2" src="/video/law-3.mp4" poster="/img/poster/law-3.webp" muted loop playsinline preload="metadata"></video>
+          <video class="sbl__cv" data-cv="3" src="/video/law-4.mp4" poster="/img/poster/law-4.webp" muted loop playsinline preload="metadata"></video>
+        </div>
+      </section>
+
+      <!-- ================ SECTION 8+9 — National Park → Count (макет 326:2186 / 189:10883) ================
+           Объединённая пиновая секция. Слева видео (v1), справа тексты/статистика (стейдж 8).
+           По скроллу: контент 8 уезжает parallax; левое видео едет вправо-вверх и ужимается в
+           верх-левую ячейку грида 2×2; проявляются 3 остальных видео и текст секции 9 (Count).
+           Nav по ходу: LAW → COUNT. -->
+      <section class="s8" id="section-park" aria-label="National Park tried something different">
+        <!-- постоянные линии: боковые (::before/::after) + центральная (50vw) -->
+        <span class="s8__vline" aria-hidden="true"></span>
+
+        <!-- СТЕЙДЖ 8 — уезжает parallax при переходе -->
+        <div class="s8__stage" data-s8-stage>
+          <h2 class="s8__title" data-split>National Park<br><span class="s8__accent">tried something different</span></h2>
+          <p class="s8__lead">West Bali National Park&nbsp; started lending birds to local breeders. Raise them. Sell them. Send ten percent back to the wild.</p>
+
+          <div class="s8__stats">
+            <div class="s8__stat s8__stat--before">
+              <span class="s8__stat-label">Before</span>
+              <div class="s8__stat-main">
+                <p class="s8__stat-num">~$2,000</p>
+                <p class="s8__stat-cap">per pair on the black market.</p>
+              </div>
+            </div>
+            <div class="s8__stat s8__stat--after">
+              <span class="s8__stat-label">After</span>
+              <div class="s8__stat-main">
+                <p class="s8__stat-num s8__stat-num--dark">~$200</p>
+                <p class="s8__stat-cap">Same bird. Legal supply.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- СТЕЙДЖ 9 — проявляется при переходе (Count) -->
+        <div class="s9__stage" data-s9-stage>
+          <h2 class="s9__title">Just above <span class="s9__num">500</span> birds today.</h2>
+          <p class="s9__sub">Scientists consider 500 individuals a stable population.</p>
+          <div class="s9__foot">
+            <p class="s9__foot-title">But the bird is <span class="s9__accent">not saved</span>.</p>
+            <p class="s9__foot-text">Most still nest in boxes people built for them.<br>It is not living wild. It is being kept.</p>
+          </div>
+
+          <!-- Грид 2×2 (gap 2px) на правой половине, во всю высоту. Ячейка [0,0] — под морф-видео. -->
+          <div class="s9__grid" data-s9-grid>
+            <div class="s9__cell s9__cell--slot" data-s9-slot aria-hidden="true"></div>
+            <div class="s9__cell" data-s9-cell>
+              <video class="s9__video" src="/video/grid-2.mp4" poster="/img/poster/grid-2.webp" muted loop playsinline preload="metadata"></video>
+            </div>
+            <div class="s9__cell" data-s9-cell>
+              <video class="s9__video" src="/video/grid-3.mp4" poster="/img/poster/grid-3.webp" muted loop playsinline preload="metadata"></video>
+            </div>
+            <div class="s9__cell" data-s9-cell>
+              <video class="s9__video" src="/video/grid-4.mp4" poster="/img/poster/grid-4.webp" muted loop playsinline preload="metadata"></video>
+            </div>
+          </div>
+        </div>
+
+        <!-- МОРФ-ВИДЕО (v1): из фрейма секции 8 в верх-левую ячейку грида. -->
+        <div class="s8__morph" data-morph>
+          <video class="s8__video" src="/video/grid-1.mp4" poster="/img/poster/grid-1.webp" muted loop playsinline preload="auto"></video>
+          <div class="s8__corners" data-morph-corners aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        </div>
+      </section>
+
+      <!-- ================ FOOTER (макет 189:10898) ================
+           Тёмная плашка #0E1219. Слева — лого FNPF + подпись (ссылка на fnpf.org),
+           справа — символ creativeshark + подпись (ссылка на creativeshark.studio).
+           Кликабельны названия сайтов. -->
+      <footer class="site-footer" id="site-footer">
+        <div class="site-footer__row">
+          <div class="site-footer__col">
+            <a class="site-footer__logo" href="https://www.fnpf.org/" target="_blank" rel="noopener noreferrer" aria-label="FNPF — Friends of the National Parks Foundation">
+              <img src="/img/footer-fnpf.svg" width="44" height="44" alt="" />
+            </a>
+            <p class="site-footer__text site-footer__text--fnpf">Learn more FNPF — Friends of the National Parks Foundation <a class="site-footer__link" href="https://www.fnpf.org/" target="_blank" rel="noopener noreferrer">fnpf.org</a></p>
+          </div>
+
+          <!-- Центральная подпись (макет 381:15812) -->
+          <p class="site-footer__center">Non-commercial project. 2026.</p>
+
+          <div class="site-footer__col site-footer__col--right">
+            <p class="site-footer__text site-footer__text--cs">Site by Sergei Evdokimov<br><a class="site-footer__link" href="https://creativeshark.studio/" target="_blank" rel="noopener noreferrer">creativeshark.studio</a></p>
+            <a class="site-footer__logo site-footer__logo--cs" href="https://creativeshark.studio/" target="_blank" rel="noopener noreferrer" aria-label="creativeshark.studio">
+              <img src="/img/footer-cs.svg" width="45" height="36" alt="" />
+            </a>
+          </div>
+        </div>
+
+        <!-- Крупная надпись Bali Starling: живой текст (Poppins 700) в inline-SVG.
+             textLength растягивает строку ровно по ширине контейнера → масштаб по экрану.
+             Цвет — через fill (переменная). Отступы: 20px от боковых линий (десктоп),
+             вплотную (мобилка), 20px до низа, 120px от контента сверху. -->
+        <div class="site-footer__brand">
+          <svg class="site-footer__brand-svg" viewBox="0 0 1400 143" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Bali Starling">
+            <text x="0" y="143" textLength="1400" lengthAdjust="spacingAndGlyphs">BALI STARLING</text>
+          </svg>
+        </div>
+      </footer>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
