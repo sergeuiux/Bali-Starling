@@ -203,8 +203,8 @@ function initSectionThreeMobile() {
         cell.className = 's3m__cell';
         cell.style.left = Math.round(c * stepX) + 'px';
         cell.style.top  = Math.round(r * stepY) + 'px';
-        cell.innerHTML = '<img class="s3m__bird s3m__bird--dark" src="/bird.svg" alt="">'
-                       + '<img class="s3m__bird s3m__bird--light" src="/bird-white.svg" alt="">';
+        cell.innerHTML = `<img class="s3m__bird s3m__bird--dark" src="${import.meta.env.BASE_URL}bird.svg" alt="">`
+                       + `<img class="s3m__bird s3m__bird--light" src="${import.meta.env.BASE_URL}bird-white.svg" alt="">`;
         flock.appendChild(cell);
         cells.push({ el: cell, r, c });
       }
@@ -381,7 +381,7 @@ function initSectionThree() {
       b.className = 's3__bird';
       b.style.left = (LEFT + c * STEP) + 'px';
       b.style.top  = (TOP + r * STEP) + 'px';
-      b.innerHTML = '<img class="s3__bird-dark" src="/bird.svg" alt="">';
+      b.innerHTML = `<img class="s3__bird-dark" src="${import.meta.env.BASE_URL}bird.svg" alt="">`;
       flock.appendChild(b);
       birds.push(b);
     }
@@ -399,7 +399,7 @@ function initSectionThree() {
     if (survSet.has(i)) {
       const light = document.createElement('img');   // белый слой для инверсии
       light.className = 's3__bird-light';
-      light.src = '/bird-white.svg';
+      light.src = `${import.meta.env.BASE_URL}bird-white.svg`;
       light.alt = '';
       b.appendChild(light);
       survivors.push(b);

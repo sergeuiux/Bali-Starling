@@ -1,7 +1,8 @@
 import { defineConfig } from 'vite';
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   root: '.',
+  base: command === 'build' ? '/Bali-Starling/' : '/',
   publicDir: 'public',
   build: {
     outDir: 'dist',
@@ -17,4 +18,4 @@ export default defineConfig({
     open: false,
     strictPort: false,
   },
-});
+}));

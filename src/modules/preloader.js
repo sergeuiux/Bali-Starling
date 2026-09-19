@@ -2,7 +2,7 @@
 
 import { currentSize } from './breakpoint.js';
 
-const FRAMES_ROOT = '/frames';
+const FRAMES_ROOT = `${import.meta.env.BASE_URL}frames`;
 
 /**
  * Грузит последовательность кадров вида /frames/{name}/{size}/frame_%04d.webp.
