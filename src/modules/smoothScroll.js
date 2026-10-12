@@ -6,6 +6,10 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
+// Пин через transform (а не position:fixed): синхронно с Lenis, без рассинхрона
+// на кадр при входе/выходе из фиксации (иначе секция прыгает на сотни px).
+ScrollTrigger.defaults({ pinType: 'transform' });
+
 export function initSmoothScroll() {
   const lenis = new Lenis({
     duration: 1.6,                                             // выше = мягче инерция

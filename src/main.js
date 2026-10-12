@@ -87,7 +87,7 @@ function initSectionTwo(allFrames, lenis) {
       pin: true,
       scrub: 0.6,          // выше = мягче/медленнее реакция
       invalidateOnRefresh: true,
-      anticipatePin: 1,
+      anticipatePin: 2,
       fastScrollEnd: true,
     },
   });
@@ -276,7 +276,7 @@ function initSectionThreeMobile() {
       pin: true,
       scrub: 0.6,
       invalidateOnRefresh: true,
-      anticipatePin: 1,
+      anticipatePin: 2,
       fastScrollEnd: true,
       onRefresh:   build,   // ScrollTrigger.refresh() (в т.ч. после resize) → пересобрать сетку
       onUpdate:    (self) => { if (nav) setNavTheme(nav, self.progress > 0.5 ? 'on-s3' : 'on-s3-light'); },
@@ -522,7 +522,7 @@ function initSectionThree() {
       pinSpacing: true,
       scrub: 0.6,
       invalidateOnRefresh: true,
-      anticipatePin: 1,
+      anticipatePin: 2,
       fastScrollEnd: true,
       onRefresh:   build,   // ScrollTrigger.refresh() (в т.ч. после resize) → пересобрать сетку
       // Тема меню — только пока секция 3 активна (иначе класс залипает на s1/s2).
@@ -658,7 +658,7 @@ function initSectionFive() {
       pin: true,
       scrub: 0.8,
       invalidateOnRefresh: true,
-      anticipatePin: 1,
+      anticipatePin: 2,
       fastScrollEnd: true,
       onRefreshInit: sizeMap,          // пересчёт размера карты при ресайзе/refresh
       onToggle: (self) => {
@@ -722,7 +722,7 @@ function initSectionFiveMobile() {
       pin: true,
       scrub: 0.8,
       invalidateOnRefresh: true,
-      anticipatePin: 1,
+      anticipatePin: 2,
       fastScrollEnd: true,
       onToggle: (self) => { if (self.isActive) setNavTheme(nav, 'on-s5'); },
     },
@@ -844,7 +844,7 @@ function initSectionSix() {
   gsap.timeline({
     scrollTrigger: {
       trigger: s, start: 'top top', end: '+=160%', pin: true, scrub: 0.8,
-      invalidateOnRefresh: true, anticipatePin: 1, fastScrollEnd: true,
+      invalidateOnRefresh: true, anticipatePin: 2, fastScrollEnd: true,
       onRefresh: measure,
       onUpdate: (self) => setNav(self.progress),
       // Тему не снимаем при выходе — соседняя секция перезапишет при входе.
@@ -1099,7 +1099,7 @@ function initSectionEight() {
     scrollTrigger: {
       id: 's8pin',
       trigger: s, start: 'top top', end: '+=250%', pin: true, scrub: 0.8,
-      invalidateOnRefresh: true, anticipatePin: 1, fastScrollEnd: true,
+      invalidateOnRefresh: true, anticipatePin: 2, fastScrollEnd: true,
       onRefresh: measure,
       onUpdate: (self) => setNav(self.progress),
       onEnter: playAll, onEnterBack: playAll,
