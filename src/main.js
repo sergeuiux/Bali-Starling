@@ -998,7 +998,21 @@ function initSectionEight() {
   if (window.matchMedia('(max-width: 768px)').matches) {
     const morphVid = morph.querySelector('video');
     if (morphVid && slot) { morphVid.classList.add('s9__video'); slot.appendChild(morphVid); }
-    playAllVids();
+    // iOS Safari отклоняет .play() для видео вне экрана при загрузке страницы.
+    // Поэтому запускаем каждое видео в момент его появления в зоне видимости
+    // (и ставим на паузу, когда уходит — экономия батареи/трафика на телефоне).
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          const v = e.target;
+          if (e.isIntersecting) { const pr = v.play(); if (pr) pr.catch(() => {}); }
+          else v.pause();
+        });
+      }, { threshold: 0.25 });
+      vids.forEach((v) => io.observe(v));
+    } else {
+      playAllVids();
+    }
     ScrollTrigger.create({
       trigger: stage8, start: 'top 70%', end: 'bottom 30%',
       onToggle: (self) => { if (self.isActive) setNavTheme(nav, 'on-s8'); },
