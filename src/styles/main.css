@@ -2309,3 +2309,8 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   .site-footer__note--nc     { justify-self: auto; text-align: left; }
   .site-footer__note--design { justify-self: auto; text-align: left; max-width: none; }
 }
+
+/* Адаптивные переносы строк: <br class="br-m"> работает только на мобилке,
+   на десктопе скрыт (пробел перед ним сохраняет разрыв слов). */
+.br-m { display: none; }
+@media (max-width: 768px) { .br-m { display: inline; } }
