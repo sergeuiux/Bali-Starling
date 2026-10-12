@@ -64,35 +64,57 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: var(--blue);
+  background: #0E1219;
   color: var(--white);
-  display: grid;
-  place-content: center;
-  gap: 24px;
-  padding: 32px;
-  transition: opacity 0.7s var(--easing), visibility 0.7s var(--easing);
+  transition: opacity 0.6s var(--easing), visibility 0.6s var(--easing);
 }
 .preloader.is-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-.preloader__logo { display: grid; place-items: center; animation: hover 3.2s ease-in-out infinite; }
-@keyframes hover { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-.preloader__bar {
-  width: min(280px, 60vw);
-  height: 2px;
-  background: rgba(255, 255, 255, 0.2);
+
+/* Окно-картинка: 320×320, строго по центру. Размер анимируется в морфе до
+   100vw/100vh; центрирование через left/top 50% + отрицательные margin,
+   поэтому рост окна остаётся симметричным от центра. */
+.pl__window {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: 320px;
+  height: 320px;
+  margin: -160px 0 0 -160px;
   overflow: hidden;
-  margin: 0 auto;
+  will-change: width, height, margin;
 }
-.preloader__fill { display: block; height: 100%; width: 0%; background: var(--white); transition: width 0.2s linear; }
-.preloader__meta {
-  display: flex;
-  justify-content: space-between;
-  width: min(280px, 60vw);
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--white-70);
-  margin: 0 auto;
-  font-weight: 500;
+/* Слои картинок стопкой. Скрытый слой «срезан» снизу (clip-path),
+   при активации раскрывается шторкой снизу вверх. */
+.pl__layer {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: 50% 50%;
+  background-repeat: no-repeat;
+  clip-path: inset(100% 0 0 0);        /* скрыт: срезан сверху */
+}
+.pl__layer.is-active { clip-path: inset(0 0 0 0); }
+/* hero-слой: кадр frame_0001, кадрирован так, что птица видна в центре окна
+   (она в правой части кадра → показываем правую часть). В морфе
+   background-position анимируется к 50% — птица уезжает в hero-позицию. */
+.pl__layer--hero { background-position: 93% 50%; }
+
+/* Счётчик под окном. */
+.pl__count {
+  position: fixed;
+  left: 0; right: 0;
+  top: calc(50% + 200px);
+  text-align: center;
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1;
+  color: var(--white);
+  font-variant-numeric: tabular-nums;
+  will-change: opacity;
+}
+/* Мобилка: шоу не показываем — просто тёмный экран, быстро гаснет. */
+@media (max-width: 768px) {
+  .pl__window, .pl__count { display: none; }
 }
 
 /* ============================================================
@@ -328,6 +350,16 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .s1::before { left: 20px; }
 .s1::after  { right: 20px; }
 
+/* Разметочные линии секции 1 (макет 384:17058). Позиции ставит JS (initHeroLines):
+   верхняя — 30px над заголовком; боковые — по краям кнопки от низа до верхней;
+   над кнопкой — 75px над ней. Скрыты на мобилке. */
+.s1__lines { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
+.s1__line { position: absolute; background: var(--line-on-video); }
+.s1__line--top    { left: 20px; right: 20px; height: 1px; }   /* между краевыми линиями */
+.s1__line--btntop { height: 1px; }                            /* left/width — из JS */
+.s1__line--l,
+.s1__line--r      { width: 1px; bottom: 0; }                  /* top/left — из JS */
+
 .s1__content {
   position: absolute;
   left: 0; right: 0; bottom: 0;
@@ -374,7 +406,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   left: 0; right: 0; bottom: 0;
   width: 207px;
   height: 60px;
-  border-radius: 8px;
+  border-radius: 0;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.3);
   backdrop-filter: blur(3.5px);
@@ -389,7 +421,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   transition: height 0.45s var(--easing), background 0.3s var(--easing);
   will-change: height;
 }
-.btn-read:hover { height: 100px; background: rgba(255, 255, 255, 0.45); }
+/* Наведение: кнопка растёт вверх до линии над ней (75px выше → 60+75=135px),
+   низ зафиксирован (bottom:0). Прижимается к горизонтали s1__line--btntop. */
+.btn-read:hover { height: 135px; background: rgba(255, 255, 255, 0.45); }
 .btn-read__label {
   flex-shrink: 0;
   font-weight: 500;
@@ -588,10 +622,34 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .s4::after  { right: 20px; }
 .s4__pad {
   position: relative;
-  height: 120vh;                       /* больше воздуха + дольше играет параллакс */
+  height: 128vh;                       /* ход для параллакса + короткий хвост до s5 */
   padding: 160px var(--inner) 0;      /* заголовок в 160px от верха */
+  /* Вертикальный якорь композиции: 66.4% высоты секции (≈85vh сверху, ≈43vh хвост)
+     + сдвиг вниз на половину высоты меню (~93px/2 = 46px), чтобы центр композиции
+     совпал с центром видимой области ПОД меню, а не всего вьюпорта. */
+  --s4-anchor: calc(66.4% + 46px);
 }
 .s4__head { position: relative; }
+
+/* ---- Параллакс-картинки (десктоп) ----
+   display:contents — обёртка не мешает абсолютному позиционированию детей
+   относительно .s4__pad. Базово обе картинки и текст центрированы на одной
+   горизонтали (якорь --s4-anchor); по скроллу JS разводит их (translateY):
+   левая опускается, правая поднимается, в центре экрана y=0 — все выровнены. */
+.s4__imgs { display: contents; }
+.s4__img {
+  position: absolute;
+  top: var(--s4-anchor);
+  width: 180px;
+  margin: 0;
+  z-index: 2;
+  border-radius: 4px;
+  overflow: hidden;
+  will-change: transform;
+}
+.s4__img img { display: block; width: 100%; height: auto; }
+.s4__img--left  { left: 100px;  margin-top: -67.5px; }  /* центр картинки = якорь */
+.s4__img--right { right: 100px; margin-top: -67.5px; }  /* центр картинки = якорь */
 .s4__title {
   margin: 0;
   font-weight: 700;
@@ -607,15 +665,21 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   line-height: 1.4;                         /* 140% */
   color: var(--white);
 }
-/* Блок цитаты — вертикальная линия ровно по центру экрана (50vw),
-   текст в 80px справа от линии, низ текста в 100px от низа экрана. */
+/* Текст — строго по центру экрана (макет 455:2588: блок 409px, центр по X = 50vw).
+   Центрируем через margin, чтобы transform остался свободен для data-reveal.
+   gap 30px между цитатой и абзацем (макет). */
 .s4__col {
   position: absolute;
+  top: var(--s4-anchor);               /* тот же якорь, что у картинок */
   left: 50%;
-  right: var(--inner);
-  bottom: 220px;                       /* выше от низа — больше воздуха до карты */
-  padding-left: 80px;
-  border-left: 1px solid rgba(255, 255, 255, 0.14);
+  width: 409px;
+  margin-left: -204.5px;               /* −width/2 */
+  margin-top: -99px;                   /* −height/2 (макет h198) */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 30px;
+  z-index: 3;
 }
 .s4__quote {
   margin: 0;
@@ -628,10 +692,12 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 .s4__quote-accent { color: var(--accent); }
 .s4__desc {
-  margin: 24px 0 0;
+  margin: 0;
   font-weight: 275;
   font-size: 16px;
   line-height: 1.4;                         /* 140% */
+  text-align: justify;
+  text-wrap: pretty;
   color: var(--white);
 }
 /* Вертикальные линии по краям (20px). Цвет светлеет вместе с фоном. */
@@ -1460,102 +1526,140 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 [data-split] .char { display: inline-block; }
 
 /* ============================================================
-   FOOTER (макет 189:10898) — светлая плашка #F2F7FD с верхней линией.
-   Слева лого FNPF + подпись; справа подпись + символ creativeshark
-   (текст выровнен вправо). Названия сайтов — ссылки (полупрозрачные,
-   темнеют на hover). Шрифт — Poppins Light (в макете Manrope; в проекте
-   единый Poppins).
+   FOOTER (макет 431:21938 / 431:22638) — светлая плашка #F2F7FD.
+   Сверху крупная надпись Bali Starling в узкой рамке-маске (по скроллу
+   проползает вверх); ниже — контент: слева лого FNPF + подписи, справа
+   «Non-commercial project. 2026.». Шрифт — Poppins Light (в макете Manrope;
+   в проекте единый Poppins).
    ============================================================ */
+/* Футер фиксирован, 100vh. Наезжает снизу поверх запиненной секции Count —
+   transform/clip-path ставит apply() из initSectionEight по прогрессу пина.
+   Стартовое положение (скрыт внизу, карточка 20px) задаём тут; apply перезапишет. */
 .site-footer {
-  --footer-pad: 100px;
-  position: relative;
-  z-index: 1;
-  background: var(--bg-light);
-  border-top: 1px solid rgba(14, 18, 25, 0.1);
-  padding: 79px var(--footer-pad) 20px;   /* 20px до низа = отступ надписи Bali Starling */
-}
-/* Верхняя строка: FNPF слева, подпись по центру, creativeshark справа. */
-.site-footer__row {
-  position: relative;
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: #F2F7FD;
+  transform: translateY(100%);
+  clip-path: inset(20px round 12px);
+  will-change: transform, clip-path;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 40px;
+  flex-direction: column;
 }
-.site-footer__col {
+/* Единый холст: фон-кадр на всю высоту (hero + надпись), поэтому картинка
+   в буквах — продолжение фоновой картинки. */
+.site-footer__canvas {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: url('/img/footer-bg.webp') center / cover no-repeat;
+}
+/* ---- Тёмная зона: затемнение + заголовок + подписи ---- */
+.site-footer__hero {
+  position: relative;
+  flex: 1;                       /* растягивается, надпись прижата к низу */
+  min-height: 640px;
+  padding: 120px var(--inner) 40px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.site-footer__shade {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(180deg, rgba(14,18,25,0.35) 0%, rgba(14,18,25,0.25) 45%, rgba(14,18,25,0.6) 100%);
+  pointer-events: none;
+}
+/* Боковые линии 20px. Светлые на тёмной зоне, тёмные (--dark) на белой. */
+.site-footer__gline {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.18);
+  z-index: 3;
+  pointer-events: none;
+}
+.site-footer__gline--l { left: 20px; }
+.site-footer__gline--r { right: 20px; }
+.site-footer__gline--dark { background: rgba(14, 18, 25, 0.14); }
+/* Заголовок — крупный, по центру верхней части. Внутренний span держит перенос
+   строки (<br>) и blur-reveal по словам ([data-split] + initHeroReveal). */
+.site-footer__title {
+  position: relative;
+  z-index: 2;
+  flex: 1 1 auto;
   display: flex;
   align-items: center;
-  gap: 20px;
-}
-/* Центральная подпись — строго по центру строки (12px/300, 130%). */
-.site-footer__center {
-  position: absolute;
-  left: 50%;
-  top: 6px;
-  transform: translateX(-50%);
+  justify-content: center;
   margin: 0;
+}
+.site-footer__title-in {
+  display: block;
   text-align: center;
-  text-wrap: pretty;
-  white-space: nowrap;
-  font-weight: 300;
-  font-size: 12px;
-  line-height: 130%;          /* 15.6px */
-  color: #0E1219;
-}
-/* Крупная надпись Bali Starling: до боковых линий (−80px компенсируют паддинг
-   100px → остаётся 20px от края), 120px от контента сверху, 20px до низа (паддинг). */
-.site-footer__brand {
-  margin: 120px calc(20px - var(--footer-pad)) 0;   /* до 20px от боковых линий */
-}
-.site-footer__brand-svg {
-  display: block;
-  width: 100%;
-  height: auto;                 /* высоту держит viewBox (1400/143) — масштаб по ширине */
-}
-/* Цвет надписи — та же тёмная гамма, что боковые линии (rgba(16,21,28,·)), но плотнее,
-   чтобы читалась. Линии — 10%, надпись — 25%. */
-.site-footer__brand-svg text {
-  font-family: 'Poppins', sans-serif;
   font-weight: 700;
-  font-size: 204px;             /* cap-height Poppins ≈0.7em → ≈143 (высота viewBox) */
-  fill: rgba(16, 21, 28, 0.25);
+  font-size: clamp(34px, 5vw, 72px);
+  line-height: 1.1;
+  color: var(--white);
 }
-/* Узкий десктоп/планшет: строка не вмещает три блока с длинным левым текстом —
-   складываем в колонку, центральную подпись пускаем в поток (без наложений). */
-@media (min-width: 769px) and (max-width: 1080px) {
-  .site-footer { --footer-pad: 40px; }
-  .site-footer__row { flex-direction: column; align-items: flex-start; gap: 24px; }
-  .site-footer__center {
-    position: static;
-    transform: none;
-    text-align: left;
-    white-space: normal;
-  }
+/* Подписи — три колонки внизу, выровнены по верху. Над ними линия (::before)
+   от левой до правой боковой (20px); текст на 40px ниже линии.
+   Non-commercial строго по центру (средняя колонка 1fr auto 1fr). */
+.site-footer__meta {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
+  gap: 40px;
+  padding: 40px 60px 0;
 }
-.site-footer__logo {
-  display: block;
-  flex-shrink: 0;
-  line-height: 0;
+.site-footer__meta::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: calc(20px - var(--inner));
+  right: calc(20px - var(--inner));
+  height: 1px;
+  background: rgba(255, 255, 255, 0.18);
 }
-.site-footer__logo img { display: block; width: 44px; height: 44px; }
-.site-footer__logo--cs img { width: 45px; height: 36px; }
-.site-footer__text {
+.site-footer__note {
   margin: 0;
   font-weight: 300;
-  font-size: 12px;
-  line-height: 130%;         /* 15.6px */
-  color: #0E1219;
+  font-size: 13px;
+  line-height: 140%;
+  color: rgba(255, 255, 255, 0.9);
   text-wrap: pretty;
 }
-.site-footer__text--fnpf { max-width: 265px; }
-.site-footer__text--cs   { text-align: right; white-space: nowrap; }
+.site-footer__note--fnpf   { justify-self: start;  text-align: left;  max-width: 265px; }
+.site-footer__note--nc     { justify-self: center; text-align: center; }
+.site-footer__note--design { justify-self: end;    text-align: right; max-width: 330px; }
 .site-footer__link {
-  color: rgba(14, 18, 25, 0.5);
+  color: var(--accent);
   text-decoration: none;
-  transition: color 0.25s var(--easing);
+  transition: opacity 0.25s var(--easing);
 }
 .site-footer__link:hover,
-.site-footer__link:focus-visible { color: #0E1219; }
+.site-footer__link:focus-visible { opacity: 0.7; }
+
+/* ---- Белая зона: буквы BALI STARLING вырезаны из белого, сквозь них — фон ---- */
+.site-footer__brandzone {
+  position: relative;
+  z-index: 2;
+}
+.site-footer__brandmask {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1440 / 181;     /* точное соответствие viewBox → текст не искажается */
+}
+.site-footer__brandmask text {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 201px;             /* cap-height Poppins ≈0.7em → ≈141 */
+  text-transform: uppercase;
+}
 
 /* ============================================================
    BURGER + MOBILE MENU (скрыты на десктопе)
@@ -1684,13 +1788,14 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
   /* ---- SECTION 1 (макет 372:2214) — статичная картинка вместо canvas ---- */
   .s1::before, .s1::after { display: none; }
+  .s1__lines { display: none; }        /* на мобилке линии не нужны */
   .s1__canvas { display: none; }
   .s1__poster {
     display: block;
     position: absolute; inset: 0;
     width: 100%; height: 100%;
     object-fit: cover;
-    object-position: 50% 45%;   /* птичка чуть выше центра — голова и хохолок видны */
+    object-position: calc(50% + 20px) 45%;   /* птичка чуть выше центра + на 20px правее */
   }
   .s1__overlay {
     background: linear-gradient(to bottom, rgba(14,18,25,0) 54%, rgba(14,18,25,0.5) 100%);
@@ -1773,7 +1878,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
   .s2__fade { display: none; }
 
-  /* Уголки-рамки 8×8 в 10px от краёв картинки; проявляются после шторки. */
+  /* Уголки-рамки 8×8 в 30px от краёв картинки; проявляются после шторки. */
   .s2__corners {
     display: block;
     inset: 0;
@@ -1784,10 +1889,10 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   }
   .s2__media.is-revealed .s2__corners { opacity: 1; }
   .s2__corners i { width: 8px; height: 8px; border-color: rgba(255, 255, 255, 0.9); }
-  .s2__corners i:nth-child(1) { top: 10px; left: 10px; right: auto; bottom: auto; border-width: 1px 0 0 1px; }
-  .s2__corners i:nth-child(2) { top: 10px; right: 10px; left: auto; bottom: auto; border-width: 1px 1px 0 0; }
-  .s2__corners i:nth-child(3) { bottom: 10px; left: 10px; right: auto; top: auto; border-width: 0 0 1px 1px; }
-  .s2__corners i:nth-child(4) { bottom: 10px; right: 10px; left: auto; top: auto; border-width: 0 1px 1px 0; }
+  .s2__corners i:nth-child(1) { top: 30px; left: 30px; right: auto; bottom: auto; border-width: 1px 0 0 1px; }
+  .s2__corners i:nth-child(2) { top: 30px; right: 30px; left: auto; bottom: auto; border-width: 1px 1px 0 0; }
+  .s2__corners i:nth-child(3) { bottom: 30px; left: 30px; right: auto; top: auto; border-width: 0 0 1px 1px; }
+  .s2__corners i:nth-child(4) { bottom: 30px; right: 30px; left: auto; top: auto; border-width: 0 1px 1px 0; }
 
   /* Факты — стеком под картинкой, разделители-линии сверху каждого. */
   .s2__facts {
@@ -1906,17 +2011,33 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   .s4__head { position: static; }
   .s4__title { font-size: 32px; line-height: 100%; }
   .s4__sub { margin-top: 16px; font-size: 14px; line-height: 140%; }
-  /* Блок цитаты — в поток (без absolute/параллакса/линии). 80px от подзаголовка. */
+
+  /* Картинки — в поток, две в ряд над текстом (макет 457:2745). Параллакс выключен. */
+  .s4__imgs {
+    display: flex;
+    gap: 8px;
+    margin-top: 80px;                   /* 80px от заголовка до картинок */
+  }
+  .s4__img {
+    position: static;
+    top: auto; left: auto; right: auto;
+    margin: 0;
+    width: auto;
+    flex: 1 1 0;
+    transform: none !important;        /* снять возможный inline-transform от GSAP */
+  }
+
+  /* Блок цитаты — в поток. 30px от картинок (макет: текст под картинками). */
   .s4__col {
     position: static;
-    margin-top: 80px;
-    padding-left: 0;
-    border-left: 0;
+    width: auto;
+    margin: 30px 0 0;
+    gap: 20px;                          /* макет мобилки: цитата → абзац 20px */
   }
   .s4__quote { font-size: 18px; line-height: 130%; }
   /* «It priced it.» с новой строки на мобилке */
   .s4__quote-accent { display: block; }
-  .s4__desc { margin-top: 20px; font-size: 14px; line-height: 140%; }
+  .s4__desc { font-size: 14px; line-height: 140%; text-align: left; }  /* макет мобилки: по левому краю */
 
   /* ---- SECTION 5 (макет 372:13593) — тёмная, карта с анимацией пути ---- */
   .s5 {
@@ -2085,7 +2206,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   }
 
   /* ---- SECTION 8+9 (National Park → Count) — простой поток ---- */
-  .s8 { min-height: 0; padding: 80px 20px 60px; }
+  .s8 { min-height: 0; padding: 80px 20px 120px; }   /* 120px от нижнего текста до футера */
   .s8__vline { display: none; }
   .s8__morph { display: none; }              /* видео grid-1 перенесено в ячейку сетки */
   .s8__stage, .s9__stage {
@@ -2146,33 +2267,45 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   }
   .s9__cell--slot { background: #0E1219; }
 
-  /* ---- FOOTER (макет 400:20709) ---- */
+  /* ---- FOOTER (макет 431:22638 / 431:22986) ---- */
+  /* Мобилка (макет 464:5202): фон-кадр мельче, подписи столбиком слева. */
+  /* Мобилка: футер в обычном потоке (без наезда и карточки) — сразу после секции. */
   .site-footer {
-    --footer-pad: 20px;
-    min-height: 0;
-    padding: 48px 20px 0;      /* контент 20px по бокам; низ 0 — надпись вплотную */
+    position: static;
+    inset: auto;
+    height: auto;
+    min-height: 100vh;         /* тёмная зона держит высоту экрана (заголовок центр) */
+    transform: none;
+    clip-path: none;
   }
-  .site-footer__row {
+  .site-footer__canvas {
+    background-image: url('/img/footer-bg-m.webp');
+  }
+  .site-footer__hero {
+    flex: 1;
+    min-height: 0;
+    padding: 100px 20px 60px;   /* низ 60px — до белой зоны с BALI STARLING */
+  }
+  .site-footer__gline--l, .site-footer__gline--r { display: none; }
+  /* Заголовок — строго по центру тёмной зоны. */
+  .site-footer__title {
+    flex: 1;
+    margin-bottom: 0;
+  }
+  .site-footer__title-in { font-size: clamp(26px, 8vw, 34px); }
+  /* Подписи — одна колонка слева, прижата к низу. Над ними линия (60px до текста). */
+  .site-footer__meta {
+    display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 0;
+    gap: 30px;
+    padding: 60px 0 0;          /* 60px от линии до текста */
   }
-  /* Центральная подпись — в поток (не абсолют), по левому краю как колонки.
-     20px от верхнего блока (FNPF), 60px до нижнего («Site by…»). */
-  .site-footer__center {
-    position: static;
-    transform: none;
-    text-align: left;
-    white-space: normal;
-    margin: 20px 0 0;
+  .site-footer__meta::before {
+    display: block;
+    left: 0; right: 0;          /* линия во всю ширину контента (20px по краям hero) */
   }
-  .site-footer__col--right { margin-top: 60px; }
-  /* FNPF: текст в 2 строки рядом с лого (макет: 265px). */
-  .site-footer__text--fnpf { max-width: 265px; }
-  /* «Site by…»: логотип слева, текст после него, выключка по левому краю. */
-  .site-footer__col--right { justify-content: flex-start; }
-  .site-footer__logo--cs { order: -1; }
-  .site-footer__text--cs { max-width: none; text-align: left; white-space: normal; }
-  /* Надпись Bali Starling — вплотную к краям (−20px гасят паддинг) и к низу. */
-  .site-footer__brand { margin: 48px -20px 0; }
+  .site-footer__note--fnpf   { justify-self: auto; text-align: left; max-width: none; }
+  .site-footer__note--nc     { justify-self: auto; text-align: left; }
+  .site-footer__note--design { justify-self: auto; text-align: left; max-width: none; }
 }

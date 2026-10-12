@@ -6,7 +6,7 @@ import { runPreloader } from './modules/preloader.js';
 import { initSmoothScroll } from './modules/smoothScroll.js';
 import { createFrameSequence } from './modules/frameSequence.js';
 import { createStage } from './modules/stage.js';
-import { splitText, initHeroReveal, initFadeReveal } from './modules/reveals.js';
+import { splitText, initHeroReveal, initFadeReveal, initHeroIntro } from './modules/reveals.js';
 import { initSoundToggle } from './modules/sound.js';
 import { initCursor } from './modules/cursor.js';
 import { initNavSplit, setNavTheme } from './modules/navSplit.js';
@@ -34,8 +34,11 @@ function initSectionTwo(allFrames, lenis) {
   // кадра) встаёт в видимое пространство (по центру левой половины на десктопе,
   // в кадр видео-области на мобилке).
   const mobile = window.matchMedia('(max-width: 768px)').matches;
+  // Новое видео (222.mp4, обрезаны боковые полосы): птичка садится по центру кадра.
+  // offsetX сдвигает окно: 0 → птица чуть правее центра видео-области (у панели);
+  // отрицательные значения показывают правую часть кадра и уводят птицу влево.
   const stage = createStage(canvas, frames, {
-    fit: 'cover', scale: 1.0, offsetX: mobile ? -0.45 : -0.42,
+    fit: 'cover', scale: 1.0, offsetX: mobile ? -0.45 : -0.15,
   });
   stage.draw(0);
 
@@ -190,7 +193,9 @@ function initSectionThreeMobile() {
     const availW = Math.round(rect.width)  || (window.innerWidth - 40);
     const availH = Math.round(rect.height) || (window.innerHeight - 200);
 
-    const cols = Math.max(2, Math.round(availW / STEP));
+    let cols = Math.max(2, Math.round(availW / STEP));
+    if (cols % 2 === 0) cols -= 1;      // нечётное число колонок → центральная колонка строго по центру экрана
+    cols = Math.max(3, cols);
     const rows = Math.max(2, Math.round(availH / STEP));
     const stepX = (availW - CELL) / (cols - 1);
     const stepY = (availH - CELL) / (rows - 1);
@@ -363,76 +368,21 @@ function initSectionThree() {
   const twoEl   = document.getElementById('section-two');
   if (!flock) return;
 
-  // --- Раскладка сетки ---
-  const SIZE = 24, GAP = 10, STEP = SIZE + GAP;   // шаг 34px
-  const LEFT = 100, TOP = 350;
+  // --- Константы раскладки ---
+  const SIZE = 24, GAP = 10, STEP = SIZE + GAP;   // шаг 34px (по вертикали)
+  const LEFT = 100, RIGHT = 100, TOP = 350;       // поля слева/справа — как у счётчиков (left/right: 100)
   const SURV = 6;
 
-  const vw = window.innerWidth, vh = window.innerHeight;
-  const cols = Math.max(1, Math.floor((vw - LEFT - 100 + GAP) / STEP));
-  const rows = Math.max(1, Math.floor((vh - TOP - 30) / STEP));
+  // Величины, зависящие от размеров окна, — пересчитываются в build() при resize/refresh.
+  let vw = 0, vh = 0, cols = 0, rows = 0;
+  let birds = [], survivors = [], faders = [];
+  let darkEls = [], lightEls = [];
+  let faderTh = [], survStart = [], survIdx = [];
+  let lineX = 0, lineTop = 0, FLY_BASE = 0, FLY_GAP = 0;
+  let lastP = 0;   // текущий прогресс анимации — чтобы восстановить состояние после пересборки
 
-  // --- Генерация птичек ---
-  flock.innerHTML = '';
-  const birds = [];
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const b = document.createElement('div');
-      b.className = 's3__bird';
-      b.style.left = (LEFT + c * STEP) + 'px';
-      b.style.top  = (TOP + r * STEP) + 'px';
-      b.innerHTML = `<img class="s3__bird-dark" src="${import.meta.env.BASE_URL}bird.svg" alt="">`;
-      flock.appendChild(b);
-      birds.push(b);
-    }
-  }
-
-  // --- 6 «выживших» — случайно (Fisher–Yates) ---
-  const order = birds.map((_, i) => i);
-  for (let i = order.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [order[i], order[j]] = [order[j], order[i]];
-  }
-  const survSet = new Set(order.slice(0, SURV));
-  const survivors = [], faders = [];
-  birds.forEach((b, i) => {
-    if (survSet.has(i)) {
-      const light = document.createElement('img');   // белый слой для инверсии
-      light.className = 's3__bird-light';
-      light.src = `${import.meta.env.BASE_URL}bird-white.svg`;
-      light.alt = '';
-      b.appendChild(light);
-      survivors.push(b);
-    } else {
-      faders.push(b);
-    }
-  });
-  const darkEls  = survivors.map((b) => b.querySelector('.s3__bird-dark'));
-  const lightEls = survivors.map((b) => b.querySelector('.s3__bird-light'));
-
-  // Порядок выживших сверху вниз — для ровной линии.
-  const lineOrder = survivors
-    .map((b) => ({ b, y: parseFloat(b.style.top) }))
-    .sort((a, z) => a.y - z.y)
-    .map((o) => o.b);
-
-  // Позиции вертикальной линии по центру экрана (мелкие, 24px).
-  const lineX   = vw / 2 - SIZE / 2;
-  const lineTop = vh * 0.5 - (SURV * STEP) / 2;   // столбец из 6 по центру по вертикали
-
-  // ============ Единая scroll-анимация (scrub, реверсивная) ============
   const clamp01 = (v) => Math.max(0, Math.min(1, v));
   const lerp = (a, b, t) => a + (b - a) * t;
-
-  // Индивидуальный порог гашения для каждой «бледной» (случайно в первой части A).
-  const faderTh = faders.map(() => Math.random() * 0.30);
-  // Стартовые позиции выживших — для интерполяции сбора в линию.
-  const survStart = survivors.map((b) => ({ left: parseFloat(b.style.left), top: parseFloat(b.style.top) }));
-  const survIdx   = survivors.map((b) => lineOrder.indexOf(b));   // индекс в линии (0 = верх)
-
-  // Разлёт вверх: нижняя (idx = SURV-1) уходит на FLY_BASE, каждая выше — на FLY_GAP
-  // дальше → промежутки растут, верхние улетают быстрее. Без роста/растяжки формы.
-  const FLY_BASE = vh * 0.4, FLY_GAP = vh * 0.16;
 
   // Тема секции: светлая (старт) → тёмная. Меню — тёмное на светлом, белое на тёмном.
   const C0 = { bg: '#F2F7FD', fg: '#10151C', line: 'rgba(16,21,28,0.12)' };
@@ -443,7 +393,82 @@ function initSectionThree() {
     setNavTheme(nav, p > 0.52 ? 'on-s3' : 'on-s3-light');
   };
 
+  // Построение/пересборка сетки под текущую ширину. Птички РАСТЯГИВАЮТСЯ по
+  // горизонтали на всю доступную ширину (от LEFT до vw−RIGHT): крайние колонки
+  // прилегают к границам, промежутки равны (stepX). По вертикали — фиксированный
+  // шаг STEP. Вызывается при старте, resize и ScrollTrigger.refresh; текущее
+  // состояние анимации (lastP) восстанавливается на свежей сетке.
+  const build = () => {
+    vw = window.innerWidth; vh = window.innerHeight;
+    const availW = Math.max(0, vw - LEFT - RIGHT);
+    cols = Math.max(1, Math.round(availW / STEP));
+    rows = Math.max(1, Math.floor((vh - TOP - 30) / STEP));
+    const stepX = cols > 1 ? (availW - SIZE) / (cols - 1) : 0;
+
+    // --- Генерация птичек ---
+    flock.innerHTML = '';
+    birds = [];
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const b = document.createElement('div');
+        b.className = 's3__bird';
+        b.style.left = (LEFT + Math.round(c * stepX)) + 'px';
+        b.style.top  = (TOP + r * STEP) + 'px';
+        b.innerHTML = `<img class="s3__bird-dark" src="${import.meta.env.BASE_URL}bird.svg" alt="">`;
+        flock.appendChild(b);
+        birds.push(b);
+      }
+    }
+
+    // --- 6 «выживших» — случайно (Fisher–Yates) ---
+    const order = birds.map((_, i) => i);
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    const survSet = new Set(order.slice(0, SURV));
+    survivors = []; faders = [];
+    birds.forEach((b, i) => {
+      if (survSet.has(i)) {
+        const light = document.createElement('img');   // белый слой для инверсии
+        light.className = 's3__bird-light';
+        light.src = `${import.meta.env.BASE_URL}bird-white.svg`;
+        light.alt = '';
+        b.appendChild(light);
+        survivors.push(b);
+      } else {
+        faders.push(b);
+      }
+    });
+    darkEls  = survivors.map((b) => b.querySelector('.s3__bird-dark'));
+    lightEls = survivors.map((b) => b.querySelector('.s3__bird-light'));
+
+    // Порядок выживших сверху вниз — для ровной линии.
+    const lineOrder = survivors
+      .map((b) => ({ b, y: parseFloat(b.style.top) }))
+      .sort((a, z) => a.y - z.y)
+      .map((o) => o.b);
+
+    // Позиции вертикальной линии по центру экрана (мелкие, 24px).
+    lineX   = vw / 2 - SIZE / 2;
+    lineTop = vh * 0.5 - (SURV * STEP) / 2;   // столбец из 6 по центру по вертикали
+
+    // Индивидуальный порог гашения для каждой «бледной» (случайно в первой части A).
+    faderTh = faders.map(() => Math.random() * 0.30);
+    // Стартовые позиции выживших — для интерполяции сбора в линию.
+    survStart = survivors.map((b) => ({ left: parseFloat(b.style.left), top: parseFloat(b.style.top) }));
+    survIdx   = survivors.map((b) => lineOrder.indexOf(b));   // индекс в линии (0 = верх)
+
+    // Разлёт вверх: нижняя (idx = SURV-1) уходит на FLY_BASE, каждая выше — на FLY_GAP
+    // дальше → промежутки растут, верхние улетают быстрее. Без роста/растяжки формы.
+    FLY_BASE = vh * 0.4; FLY_GAP = vh * 0.16;
+
+    applyAll(lastP);   // восстановить текущее состояние анимации на новой сетке
+  };
+
+  // ============ Единая scroll-анимация (scrub, реверсивная) ============
   const applyAll = (p) => {
+    lastP = p;
     // --- Счётчик (идёт, пока гаснут птички) ---
     const a = clamp01(p / 0.34);
     if (bigEl)  bigEl.textContent  = Math.round(lerp(309, 6, a));
@@ -480,8 +505,12 @@ function initSectionThree() {
     });
   };
 
-  applyAll(0);
-  if (import.meta.env.DEV) window.__s3 = { applyAll };
+  build();
+  if (import.meta.env.DEV) window.__s3 = { applyAll, build };
+
+  // Пересборка сетки под новую ширину/высоту (resize окна, в т.ч. разворот на весь монитор).
+  let rt = 0;
+  window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(build, 200); });
 
   const m = { p: 0 };
   gsap.timeline({
@@ -495,6 +524,7 @@ function initSectionThree() {
       invalidateOnRefresh: true,
       anticipatePin: 1,
       fastScrollEnd: true,
+      onRefresh:   build,   // ScrollTrigger.refresh() (в т.ч. после resize) → пересобрать сетку
       // Тема меню — только пока секция 3 активна (иначе класс залипает на s1/s2).
       onUpdate:    (self) => setS3Nav(self.progress),
       onEnter:     (self) => setS3Nav(self.progress),
@@ -530,23 +560,25 @@ function initSectionThree() {
 function initSectionFour() {
   const section = document.getElementById('section-four');
   if (!section) return;
-  const col = section.querySelector('.s4__col');
-  if (!col) return;
 
-  // Параллакс блока цитаты — только десктоп. На мобилке всё в обычном потоке.
+  // Параллакс двух картинок — только десктоп. На мобилке — обычный поток.
+  // Левая едет вниз, правая вверх. Ход подобран так, чтобы y=0 (обе картинки и
+  // текст на одной горизонтали) приходился на момент, когда композиция в центре
+  // экрана (≈p=0.58 при высоте секции 128vh). Дальше картинки расходятся.
   const mobile = window.matchMedia('(max-width: 768px)').matches;
   if (!mobile) {
-    gsap.fromTo(col, { y: 220 }, {
-      y: -220,
-      ease: 'none',
-      scrollTrigger: {
-        trigger: section,
-        start: 'top bottom',
-        end: 'bottom top',
-        scrub: true,
-        invalidateOnRefresh: true,
-      },
-    });
+    const imgLeft = section.querySelector('[data-s4-img-left]');
+    const imgRight = section.querySelector('[data-s4-img-right]');
+    const st = {
+      trigger: section,
+      start: 'top bottom',
+      end: 'bottom top',
+      scrub: true,
+      invalidateOnRefresh: true,
+    };
+    // y=0 при p = 232/(232+160) ≈ 0.592 — совпадает с моментом центрирования.
+    if (imgLeft)  gsap.fromTo(imgLeft,  { y: -232 }, { y: 160,  ease: 'none', scrollTrigger: st });
+    if (imgRight) gsap.fromTo(imgRight, { y: 232 },  { y: -160, ease: 'none', scrollTrigger: st });
   }
 
   // Nav — светлая тема (заливка), активен «Collapse» пока секция 4 в зоне видимости.
@@ -955,6 +987,7 @@ function initSectionEight() {
   const slot    = s.querySelector('[data-s9-slot]');
   const cells   = Array.from(s.querySelectorAll('[data-s9-cell]'));
   const vids    = Array.from(s.querySelectorAll('video'));
+  const footer  = document.getElementById('site-footer');
   if (!morph || !slot) return;
 
   const playAllVids = () => vids.forEach((v) => { const pr = v.play(); if (pr) pr.catch(() => {}); });
@@ -974,6 +1007,9 @@ function initSectionEight() {
       trigger: stage9, start: 'top 70%', end: 'bottom 30%',
       onToggle: (self) => { if (self.isActive) setNavTheme(nav, 'on-s9'); },
     });
+    // На мобилке футер — в обычном потоке (без наезда и пина), чтобы не было
+    // лишнего пустого спейсера перед ним. Сбрасываем inline-трансформ от десктопа.
+    if (footer) footer.style.transform = 'none';
     return;
   }
 
@@ -994,26 +1030,42 @@ function initSectionEight() {
     };
   };
 
+  const mobile = window.matchMedia('(max-width: 768px)').matches;
+
   const apply = (p) => {
-    // морф-видео: движется в первые ~60% скролла
-    const q = easeInOut(clamp01(p / 0.6));
+    // Пин длится 250%: первые 60% прогресса — анимация s8→s9 (как раньше за 150%),
+    // mp — её локальный прогресс. Последние 40% — секция Count статична (mp=1),
+    // и на неё наезжает футер (fp).
+    const mp = clamp01(p / 0.6);
+    const fp = clamp01((p - 0.6) / 0.4);
+
+    // морф-видео: движется в первые ~60% анимации
+    const q = easeInOut(clamp01(mp / 0.6));
     morph.style.left   = lerp(start.left, end.left, q) + 'px';
     morph.style.top    = lerp(start.top, end.top, q) + 'px';
     morph.style.width  = lerp(start.width, end.width, q) + 'px';
     morph.style.height = lerp(start.height, end.height, q) + 'px';
-    if (corners) corners.style.opacity = 1 - clamp01(p / 0.5);
+    if (corners) corners.style.opacity = 1 - clamp01(mp / 0.5);
     // стейдж 8 — уезжает вверх и гаснет
     const secH = s.getBoundingClientRect().height || window.innerHeight;
-    stage8.style.transform = `translateY(${-0.55 * secH * clamp01(p / 0.55)}px)`;
-    stage8.style.opacity = 1 - clamp01(p / 0.45);
+    stage8.style.transform = `translateY(${-0.55 * secH * clamp01(mp / 0.55)}px)`;
+    stage8.style.opacity = 1 - clamp01(mp / 0.45);
     // стейдж 9 (текст Count) — проявляется
-    stage9.style.opacity = clamp01((p - 0.28) / 0.35);
+    stage9.style.opacity = clamp01((mp - 0.28) / 0.35);
     // ячейки грида v4/v3/v2 — проявляются со стаггером
     cells.forEach((c, i) => {
-      const t = clamp01((p - (0.35 + i * 0.08)) / 0.22);
+      const t = clamp01((mp - (0.35 + i * 0.08)) / 0.22);
       c.style.opacity = t;
       c.style.transform = `scale(${lerp(0.94, 1, t)})`;
     });
+
+    // Наезд футера снизу поверх статичной секции Count.
+    if (footer) {
+      footer.style.transform = `translateY(${(1 - fp) * 100}%)`;
+      if (!mobile) {
+        footer.style.clipPath = `inset(${20 * (1 - fp)}px round ${12 * (1 - fp)}px)`;
+      }
+    }
   };
 
   const setNav = (p) => {
@@ -1032,7 +1084,7 @@ function initSectionEight() {
   gsap.timeline({
     scrollTrigger: {
       id: 's8pin',
-      trigger: s, start: 'top top', end: '+=150%', pin: true, scrub: 0.8,
+      trigger: s, start: 'top top', end: '+=250%', pin: true, scrub: 0.8,
       invalidateOnRefresh: true, anticipatePin: 1, fastScrollEnd: true,
       onRefresh: measure,
       onUpdate: (self) => setNav(self.progress),
@@ -1043,6 +1095,52 @@ function initSectionEight() {
   }).to(m, { p: 1, duration: 1, ease: 'none', onUpdate: () => apply(m.p) }, 0);
 
   if (import.meta.env.DEV) window.__s8 = { apply, measure, start: () => start, end: () => end };
+}
+
+/* Секция 1 — разметочные линии (макет 384:17058, только десктоп).
+   - горизонталь на 30px выше заголовка (между краевыми линиями);
+   - две вертикали по бокам кнопки, от низа секции до верхней горизонтали;
+   - горизонталь на 75px выше кнопки, соединяет боковые (к ней тянется кнопка на hover).
+   Позиции считаются по реальным прямоугольникам заголовка и кнопки (пересчёт на
+   resize/refresh/готовность шрифтов), поэтому совпадают с макетом на любой ширине. */
+function initHeroLines() {
+  const section = document.getElementById('section-one');
+  if (!section) return;
+  const title = section.querySelector('.s1__title');
+  const wrap  = section.querySelector('.btn-read-wrap');
+  const lineTop    = section.querySelector('[data-s1-line-top]');
+  const lineBtnTop = section.querySelector('[data-s1-line-btntop]');
+  const lineL = section.querySelector('[data-s1-line-l]');
+  const lineR = section.querySelector('[data-s1-line-r]');
+  if (!title || !wrap || !lineTop || !lineBtnTop || !lineL || !lineR) return;
+
+  const place = () => {
+    const sr = section.getBoundingClientRect();
+    const tr = title.getBoundingClientRect();
+    const br = wrap.getBoundingClientRect();
+    const topY = Math.round(tr.top - sr.top - 30);   // 30px над заголовком
+    const bl = Math.round(br.left - sr.left);
+    const brr = Math.round(br.right - sr.left);
+
+    lineTop.style.top = topY + 'px';
+
+    lineL.style.top = topY + 'px';
+    lineL.style.left = bl + 'px';
+    lineR.style.top = topY + 'px';
+    lineR.style.left = brr + 'px';
+
+    lineBtnTop.style.top = Math.round(br.top - sr.top - 75) + 'px';   // 75px над кнопкой
+    lineBtnTop.style.left = bl + 'px';
+    lineBtnTop.style.width = Math.round(br.width) + 'px';
+  };
+
+  place();
+  // Пересчёт после intro-анимации (s1__bottom стартует со сдвигом y=26 и приходит
+  // в 0 за ~0.8с) — иначе линии зафиксируются по промежуточной позиции кнопки.
+  gsap.delayedCall(1.1, place);
+  window.addEventListener('resize', place);
+  ScrollTrigger.addEventListener('refresh', place);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
 }
 
 const app = {
@@ -1076,12 +1174,17 @@ const app = {
             end: '+=200%',
             pin: true,
             stageOptions: { offsetX: 0 },
+            intro: false,   // без наплыва кадра
           });
         }
 
         // Reveal заголовков и нижнего блока.
         initHeroReveal(root);
         initFadeReveal(root);
+        // Секция 1: единый intro при загрузке (меню + заголовок + текст/кнопка
+        // синхронно) и разметочные линии вокруг кнопки и над заголовком.
+        initHeroIntro(root);
+        if (!mobile) initHeroLines();
 
         // Блюр секции 1, когда секция 2 видна больше чем на 50%.
         // (S2→S3 без блюра — секция 3 наезжает поверх секции 2.)

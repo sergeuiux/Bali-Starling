@@ -73,7 +73,9 @@ export function splitText(root) {
  * загрузке. Запускается после прелоадера.
  */
 function setupReveal(root, selector, apply) {
-  const items = [...root.querySelectorAll(selector)];
+  // Элементы секции 1 (hero) исключаем из IntersectionObserver — их проигрывает
+  // единый intro при загрузке (initHeroIntro), синхронно с меню, а не по видимости.
+  const items = [...root.querySelectorAll(selector)].filter((el) => !el.closest('#section-one'));
   if (!items.length) return;
 
   items.forEach((el) => apply.reset(el));
@@ -114,6 +116,36 @@ export function initHeroReveal(root, selector = '[data-split]') {
       });
     },
   });
+}
+
+/**
+ * Intro секции 1 при загрузке: всё появляется синхронно (одним таймлайном) —
+ * верхнее меню выезжает сверху из непрозрачности, заголовок поднимается по словам,
+ * текст и кнопка всплывают вместе с ним. Запускается один раз после прелоадера
+ * (элементы секции 1 исключены из IntersectionObserver, см. setupReveal).
+ */
+export function initHeroIntro(root) {
+  const section = root.querySelector('#section-one');
+  if (!section) return;
+  const nav    = document.getElementById('siteNav');
+  const title  = section.querySelector('.s1__title');
+  const bottom = section.querySelector('.s1__bottom');
+  const words  = title ? title.querySelectorAll('.word__inner') : [];
+
+  const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+
+  if (nav) {
+    gsap.set(nav, { yPercent: -100, opacity: 0 });
+    tl.to(nav, { yPercent: 0, opacity: 1, duration: 0.8, clearProps: 'transform,opacity' }, 0);
+  }
+  if (words.length) {
+    gsap.set(words, { yPercent: 100, opacity: 0, filter: 'blur(4px)' });
+    tl.to(words, { yPercent: 0, opacity: 1, filter: 'blur(0px)', duration: 0.7, stagger: 0.05 }, 0);
+  }
+  if (bottom) {
+    gsap.set(bottom, { y: 26, opacity: 0, filter: 'blur(4px)' });
+    tl.to(bottom, { y: 0, opacity: 1, filter: 'blur(0px)', duration: 0.75 }, 0);
+  }
 }
 
 export function initFadeReveal(root) {

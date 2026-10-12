@@ -11,16 +11,22 @@
     <link rel="stylesheet" href="/src/styles/main.css" />
   </head>
   <body>
-    <!-- ============ PRELOADER ============ -->
+    <!-- ============ PRELOADER ============
+         Окно-картинка 320×320 по центру; картинки сменяются шторкой (clip-path)
+         синхронно со счётчиком 1→99. Последний слой (hero) — первый кадр hero;
+         на 99 окно расширяется во весь экран, а кадр переезжает в hero-позицию
+         (birds справа) → бесшовный переход в canvas-анимацию.
+         Мобилка: эти элементы скрыты, прелоадер просто тёмный и быстро гаснет. -->
     <div class="preloader" id="preloader" aria-hidden="true">
-      <div class="preloader__logo">
-        <img src="/logo.svg" width="48" height="48" alt="" style="filter: brightness(0) invert(1);" />
+      <div class="pl__window" id="plWindow">
+        <div class="pl__layer is-active" data-pl-layer="0" style="background-image:url('/img/preloader/pre-1.webp')"></div>
+        <div class="pl__layer" data-pl-layer="1" style="background-image:url('/img/preloader/pre-2.webp')"></div>
+        <div class="pl__layer" data-pl-layer="2" style="background-image:url('/img/preloader/pre-3.webp')"></div>
+        <div class="pl__layer" data-pl-layer="3" style="background-image:url('/img/preloader/pre-4.webp')"></div>
+        <div class="pl__layer" data-pl-layer="4" style="background-image:url('/img/preloader/pre-5.webp')"></div>
+        <div class="pl__layer pl__layer--hero" data-pl-layer="5" id="plHeroLayer"></div>
       </div>
-      <div class="preloader__bar"><span class="preloader__fill" id="preloaderFill"></span></div>
-      <div class="preloader__meta">
-        <span class="preloader__label">Leucopsar rothschildi</span>
-        <span class="preloader__pct" id="preloaderPct">0%</span>
-      </div>
+      <div class="pl__count" id="plCount">1</div>
     </div>
 
     <!-- ============ SITE ============ -->
@@ -111,11 +117,20 @@
         <img class="s1__poster" src="/img/s1-mobile.webp" alt="Bali starling" />
         <div class="s1__overlay" aria-hidden="true"></div>
 
+        <!-- Разметочные линии (макет 384:17058, десктоп). Позиции ставит JS
+             (initHeroLines) по заголовку и кнопке. -->
+        <div class="s1__lines" aria-hidden="true">
+          <span class="s1__line s1__line--top" data-s1-line-top></span>
+          <span class="s1__line s1__line--btntop" data-s1-line-btntop></span>
+          <span class="s1__line s1__line--l" data-s1-line-l></span>
+          <span class="s1__line s1__line--r" data-s1-line-r></span>
+        </div>
+
         <div class="s1__content">
           <h1 class="s1__title" data-split>The last endemic vertebrate on&nbsp;Bali</h1>
           <div class="s1__bottom" data-reveal>
             <p class="s1__subtitle">
-              Story about a bird. A law no government<br>wrote. And the island that chose to keep it.
+              The story of a bird, an unwritten law,<br>and an island that chose to honor it.
             </p>
             <div class="btn-read-wrap">
               <button class="btn-read" type="button">
@@ -224,6 +239,18 @@
             <p class="s4__sub" data-reveal>Forty-three years of legal protection.</p>
           </div>
 
+          <!-- Две картинки с параллаксом (левая опускается, правая поднимается;
+               в центре экрана встают в позиции макета — симметрично вокруг текста).
+               На мобилке .s4__imgs становится рядом из двух картинок над текстом. -->
+          <div class="s4__imgs" aria-hidden="true">
+            <figure class="s4__img s4__img--left" data-s4-img-left>
+              <img src="/img/six-1.webp" width="180" height="135" alt="" loading="lazy" />
+            </figure>
+            <figure class="s4__img s4__img--right" data-s4-img-right>
+              <img src="/img/six-2.webp" width="180" height="135" alt="" loading="lazy" />
+            </figure>
+          </div>
+
           <div class="s4__col" data-reveal>
             <p class="s4__quote">
               The ban did not protect the bird.
@@ -307,7 +334,7 @@
         <div class="s5__side">
           <p class="s5__lead" data-reveal>The veterinarian<br><span class="s5__result-accent">who started it all</span></p>
           <div class="s5__p2wrap">
-            <p class="s5__p2" data-reveal>In the early 2000s, veterinarian Bayu Virayudha went from village<br>to village across Nusa Penida. He met people at weddings,<br>ceremonies, and community gatherings. He explained the<br>problem and asked for their support.</p>
+            <p class="s5__p2" data-reveal>In the early 2000s, veterinarian Bayu Wirayudha went from village<br>to village across Nusa Penida. He met people at weddings,<br>ceremonies, and community gatherings. He explained the<br>problem and asked for their support.</p>
             <p class="s5__result" data-s5-result><span>And all the villages </span><span class="s5__result-accent">agreed to help</span></p>
           </div>
         </div>
@@ -347,7 +374,7 @@
           </div>
 
           <div class="s5m__text">
-            <p class="s5m__p" data-reveal>In the early 2000s, Balinese veterinarian Bayu Virayudha traveled to every village on Nusa Penida.</p>
+            <p class="s5m__p" data-reveal>In the early 2000s, Balinese veterinarian Bayu Wirayudha traveled to every village on Nusa Penida.</p>
             <p class="s5m__p" data-reveal>Not government officials. Villages. Weddings, ceremonies, gatherings. He explained his idea and asked for letters of support.</p>
             <p class="s5m__result" data-s5m-result>And all the villages <span class="s5__result-accent">agreed to help</span></p>
           </div>
@@ -517,38 +544,49 @@
         </div>
       </section>
 
-      <!-- ================ FOOTER (макет 189:10898) ================
-           Тёмная плашка #0E1219. Слева — лого FNPF + подпись (ссылка на fnpf.org),
-           справа — символ creativeshark + подпись (ссылка на creativeshark.studio).
-           Кликабельны названия сайтов. -->
+      <!-- ================ FOOTER (макет 431:21938 / 431:22638) ================
+           Светлая плашка #F2F7FD. Сверху — крупная надпись Bali Starling в узкой
+           рамке-маске (overflow hidden): по скроллу вниз она проползает вверх внутри
+           рамки (десктоп 431:21938→431:22290, мобилка 431:22638→431:22986). Ниже —
+           контент: слева лого FNPF + подписи, справа «Non-commercial project. 2026.». -->
+      <!-- Футер fixed, наезжает снизу поверх запиненной секции Count (управляется
+           из initSectionEight: наезд в последние 40% пина секции). -->
       <footer class="site-footer" id="site-footer">
-        <div class="site-footer__row">
-          <div class="site-footer__col">
-            <a class="site-footer__logo" href="https://www.fnpf.org/" target="_blank" rel="noopener noreferrer" aria-label="FNPF — Friends of the National Parks Foundation">
-              <img src="/img/footer-fnpf.svg" width="44" height="44" alt="" />
-            </a>
-            <p class="site-footer__text site-footer__text--fnpf">Learn more FNPF — Friends of the National Parks Foundation <a class="site-footer__link" href="https://www.fnpf.org/" target="_blank" rel="noopener noreferrer">fnpf.org</a></p>
+        <!-- Единый холст с фоном-кадром (frame_0058) на всю высоту: hero + надпись.
+             Поэтому картинка в буквах BALI STARLING — продолжение фоновой картинки. -->
+        <div class="site-footer__canvas">
+          <!-- Тёмная зона: затемнение, крупный заголовок, блок подписей. -->
+          <div class="site-footer__hero">
+            <div class="site-footer__shade" aria-hidden="true"></div>
+
+            <!-- Боковые линии 20px (светлые на тёмном фоне). -->
+            <span class="site-footer__gline site-footer__gline--l" aria-hidden="true"></span>
+            <span class="site-footer__gline site-footer__gline--r" aria-hidden="true"></span>
+
+            <h2 class="site-footer__title"><span class="site-footer__title-in" data-split>If an island can make<br>a difference, so&nbsp;can&nbsp;we!</span></h2>
+
+            <div class="site-footer__meta">
+              <p class="site-footer__note site-footer__note--fnpf">Learn more about the Friends of the National Parks Foundation at <a class="site-footer__link" href="https://www.fnpf.org/" target="_blank" rel="noopener noreferrer">fnpf.org</a></p>
+              <p class="site-footer__note site-footer__note--nc">Non-commercial project. 2026.</p>
+              <p class="site-footer__note site-footer__note--design">Design by Sergei Evdokimov<br><a class="site-footer__link" href="https://creativeshark.studio/" target="_blank" rel="noopener noreferrer">creativeshark.studio</a></p>
+            </div>
           </div>
 
-          <!-- Центральная подпись (макет 381:15812) -->
-          <p class="site-footer__center">Non-commercial project. 2026.</p>
-
-          <div class="site-footer__col site-footer__col--right">
-            <p class="site-footer__text site-footer__text--cs">Site by Sergei Evdokimov<br><a class="site-footer__link" href="https://creativeshark.studio/" target="_blank" rel="noopener noreferrer">creativeshark.studio</a></p>
-            <a class="site-footer__logo site-footer__logo--cs" href="https://creativeshark.studio/" target="_blank" rel="noopener noreferrer" aria-label="creativeshark.studio">
-              <img src="/img/footer-cs.svg" width="45" height="36" alt="" />
-            </a>
+          <!-- Белая зона #F2F7FD: буквы BALI STARLING «вырезаны» из белого SVG-маской,
+               сквозь них видна та же фоновая картинка (продолжение фона). -->
+          <div class="site-footer__brandzone">
+            <span class="site-footer__gline site-footer__gline--l site-footer__gline--dark" aria-hidden="true"></span>
+            <span class="site-footer__gline site-footer__gline--r site-footer__gline--dark" aria-hidden="true"></span>
+            <svg class="site-footer__brandmask" viewBox="0 0 1440 181" preserveAspectRatio="none" role="img" aria-label="Bali Starling">
+              <defs>
+                <mask id="footerCut">
+                  <rect width="1440" height="181" fill="#fff" />
+                  <text x="720" y="161" text-anchor="middle" textLength="1400" lengthAdjust="spacingAndGlyphs" fill="#000">BALI STARLING</text>
+                </mask>
+              </defs>
+              <rect width="1440" height="181" fill="#F2F7FD" mask="url(#footerCut)" />
+            </svg>
           </div>
-        </div>
-
-        <!-- Крупная надпись Bali Starling: живой текст (Poppins 700) в inline-SVG.
-             textLength растягивает строку ровно по ширине контейнера → масштаб по экрану.
-             Цвет — через fill (переменная). Отступы: 20px от боковых линий (десктоп),
-             вплотную (мобилка), 20px до низа, 120px от контента сверху. -->
-        <div class="site-footer__brand">
-          <svg class="site-footer__brand-svg" viewBox="0 0 1400 143" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Bali Starling">
-            <text x="0" y="143" textLength="1400" lengthAdjust="spacingAndGlyphs">BALI STARLING</text>
-          </svg>
         </div>
       </footer>
     </div>

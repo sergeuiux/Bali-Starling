@@ -14,12 +14,17 @@ const ROOT = resolve(__dirname, '..');
 
 const VIDEOS = [
   { src: 'assets/s1.mp4', name: 's1' }, // птичка улетает — секция 1
-  { src: 'assets/s2.mp4', name: 's2' }, // птичка прилетает — секция 2
+  { src: 'assets/s2.mp4', name: 's2' }, // птичка прилетает — секция 2 (2222.mp4, без полос)
 ];
 
-// FPS прореживания: видео 30 fps × 4 c = 120 кадров. Берём 20 fps → 80 кадров
-// (как в Bali Starling) — плавность сохраняется, вес меньше.
-const FPS = 20;
+// Можно нарезать выборочно: `npm run frames -- s1` (только s1). Без аргументов —
+// все видео. Полезно, чтобы пересобрать одну секцию, не трогая другую.
+const ONLY = process.argv.slice(2);
+const TARGETS = ONLY.length ? VIDEOS.filter(v => ONLY.includes(v.name)) : VIDEOS;
+
+// FPS прореживания. Исходники ~3 c при 30 fps (~90 кадров). Берём 18 fps → ~55
+// кадров — плавность сохраняется при том же ходе скролла, вес заметно меньше.
+const FPS = 18;
 
 const SIZES = [
   { key: 'desktop', maxSide: 1440, quality: 80 },
@@ -36,7 +41,7 @@ function bytes(n) {
   return n + ' B';
 }
 
-for (const video of VIDEOS) {
+for (const video of TARGETS) {
   const srcPath = join(ROOT, video.src);
 
   for (const size of SIZES) {
@@ -49,10 +54,16 @@ for (const video of VIDEOS) {
     mkdirSync(outDir, { recursive: true });
 
     console.log(`\n[ffmpeg] ${video.name} → ${size.key} (max ${size.maxSide}px)`);
+    const vf = [
+      video.crop ? `crop=${video.crop}` : null,   // убрать чёрные полосы (если заданы)
+      `fps=${FPS}`,
+      `scale=w=${size.maxSide}:h=${size.maxSide}:force_original_aspect_ratio=decrease:force_divisible_by=2:flags=lanczos`,
+    ].filter(Boolean).join(',');
+
     const ff = spawnSync('ffmpeg', [
       '-y', '-loglevel', 'error',
       '-i', srcPath,
-      '-vf', `fps=${FPS},scale=w=${size.maxSide}:h=${size.maxSide}:force_original_aspect_ratio=decrease:force_divisible_by=2:flags=lanczos`,
+      '-vf', vf,
       join(tmpDir, 'frame_%04d.png'),
     ], { stdio: 'inherit' });
 

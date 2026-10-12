@@ -81,7 +81,18 @@ export function createStage(canvas, frames, options = {}) {
   }
 
   resize();
-  window.addEventListener('resize', resize);
+  // ResizeObserver надёжнее события window 'resize': он срабатывает уже ПОСЛЕ того,
+  // как браузер пересчитал layout, и с актуальным размером canvas (изменение окна,
+  // пин, перекомпоновка flex, показ скрытого элемента). Благодаря этому пиксельный
+  // буфер всегда точно соответствует CSS-боксу, и кадр не деформируется — всё
+  // масштабирование идёт за счёт рамки (cover внутри неё), пропорции кадра сохраняются.
+  // window 'resize' брал размер до завершения layout и давал сплющенный кадр.
+  if (typeof ResizeObserver !== 'undefined') {
+    const ro = new ResizeObserver(() => resize());
+    ro.observe(canvas);
+  } else {
+    window.addEventListener('resize', resize);
+  }
 
   return { draw, resize };
 }
