@@ -1697,7 +1697,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   grid-template-columns: 1fr auto 1fr;
   align-items: start;
   gap: 40px;
-  padding: 40px 60px 0;
+  padding: 40px 0 0;   /* гориз. отступ даёт hero (--inner) — текст по ширине контента */
 }
 .site-footer__meta::before {
   content: '';
