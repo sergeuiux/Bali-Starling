@@ -2397,3 +2397,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
    на десктопе скрыт (пробел перед ним сохраняет разрыв слов). */
 .br-m { display: none; }
 @media (max-width: 768px) { .br-m { display: inline; } }
+/* <br class="br-d"> — наоборот: перенос только на десктопе, на мобилке
+   скрыт, чтобы длинные фразы текли естественно без рваных строк. */
+.br-d { display: inline; }
+@media (max-width: 768px) { .br-d { display: none; } }
