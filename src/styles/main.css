@@ -1716,7 +1716,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   color: rgba(255, 255, 255, 0.9);
   text-wrap: pretty;
 }
-.site-footer__note--fnpf   { justify-self: start;  text-align: left;  max-width: 265px; }
+.site-footer__note--fnpf   { justify-self: start;  text-align: left;  max-width: 360px; }
 .site-footer__note--nc     { justify-self: center; text-align: center; }
 .site-footer__note--design { justify-self: end;    text-align: right; max-width: 330px; }
 .site-footer__link {
