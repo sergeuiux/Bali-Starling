@@ -18,15 +18,34 @@
          (birds справа) → бесшовный переход в canvas-анимацию.
          Мобилка: эти элементы скрыты, прелоадер просто тёмный и быстро гаснет. -->
     <div class="preloader" id="preloader" aria-hidden="true">
+      <!-- Рамка-линии 20px по краям (как на секциях сайта). -->
+      <span class="pl__edge pl__edge--l" aria-hidden="true"></span>
+      <span class="pl__edge pl__edge--r" aria-hidden="true"></span>
+      <span class="pl__edge pl__edge--t" aria-hidden="true"></span>
+      <span class="pl__edge pl__edge--b" aria-hidden="true"></span>
+
+      <!-- Окно-картинка 320×320, центр на 30px выше середины. Каждый слой —
+           обёртка (clip-path, раскрытие из центра) + внутренний слой-картинка
+           (зум scale 1.5→1), эффект появления «из центра» как на realevate. -->
       <div class="pl__window" id="plWindow">
-        <div class="pl__layer is-active" data-pl-layer="0" style="background-image:url('/img/preloader/pre-1.webp')"></div>
-        <div class="pl__layer" data-pl-layer="1" style="background-image:url('/img/preloader/pre-2.webp')"></div>
-        <div class="pl__layer" data-pl-layer="2" style="background-image:url('/img/preloader/pre-3.webp')"></div>
-        <div class="pl__layer" data-pl-layer="3" style="background-image:url('/img/preloader/pre-4.webp')"></div>
-        <div class="pl__layer" data-pl-layer="4" style="background-image:url('/img/preloader/pre-5.webp')"></div>
-        <div class="pl__layer pl__layer--hero" data-pl-layer="5" id="plHeroLayer"></div>
+        <div class="pl__layer is-active" data-pl-layer="0"><div class="pl__layer-img" style="background-image:url('/img/preloader/pre-1.webp')"></div></div>
+        <div class="pl__layer" data-pl-layer="1"><div class="pl__layer-img" style="background-image:url('/img/preloader/pre-2.webp')"></div></div>
+        <div class="pl__layer" data-pl-layer="2"><div class="pl__layer-img" style="background-image:url('/img/preloader/pre-3.webp')"></div></div>
+        <div class="pl__layer" data-pl-layer="3"><div class="pl__layer-img" style="background-image:url('/img/preloader/pre-4.webp')"></div></div>
+        <div class="pl__layer" data-pl-layer="4"><div class="pl__layer-img" style="background-image:url('/img/preloader/pre-5.webp')"></div></div>
+        <div class="pl__layer pl__layer--hero" data-pl-layer="5"><div class="pl__layer-img" id="plHeroLayer"></div></div>
       </div>
-      <div class="pl__count" id="plCount">1</div>
+
+      <!-- Подписи у картинки: Leucopsar — вертикально слева, Rothschildi —
+           горизонтально снизу, по 10px от краёв картинки. -->
+      <div class="pl__cap pl__cap--v" id="plCapV">Leucopsar</div>
+      <div class="pl__cap pl__cap--h" id="plCapH">Rothschildi</div>
+
+      <!-- Линия загрузки: белый трек (10%) + красное заполнение бренда. -->
+      <div class="pl__track" id="plTrack"><div class="pl__fill" id="plFill"></div></div>
+
+      <!-- Цифры загрузки (правый нижний угол): число 86px + процент 32px. -->
+      <div class="pl__num" id="plNum"><span id="plCount">1</span><span class="pl__pct">%</span></div>
     </div>
 
     <!-- ============ SITE ============ -->
@@ -108,7 +127,7 @@
           <span class="song-toggle__bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
         </button>
       </div>
-      <audio id="birdSong" preload="auto" loop playsinline src="audio/starling.mp3"></audio>
+      <audio id="birdSong" preload="none" loop playsinline src="audio/starling.mp3"></audio>
 
       <!-- ================ SECTION 1 — full-screen video (bird flies away) ================ -->
       <section class="s1" id="section-one">
@@ -334,7 +353,7 @@
         <div class="s5__side">
           <p class="s5__lead" data-reveal>The veterinarian<br><span class="s5__result-accent">who started it all</span></p>
           <div class="s5__p2wrap">
-            <p class="s5__p2" data-reveal>In the early 2000s, veterinarian Bayu Wirayudha went from village<br>to village across Nusa Penida. He met people at weddings,<br>ceremonies, and community gatherings. He explained the<br>problem and asked for their support.</p>
+            <p class="s5__p2" data-reveal>In the early 2000s, veterinarian Bayu Wirayudha went from village<br>to village across Nusa Penida. He met people at weddings,<br>ceremonies, and community gatherings. He explained<br>the problem and asked for their support.</p>
             <p class="s5__result" data-s5-result><span>And all the villages </span><span class="s5__result-accent">agreed to help</span></p>
           </div>
         </div>
@@ -447,7 +466,7 @@
             <span class="sbl__fill" aria-hidden="true"></span>
             <span class="sbl__text">
               <span class="sbl__num">(02)</span>
-              <span class="sbl__ct">Then you feed the<br>entire village.</span>
+              <span class="sbl__ct">Then you feed<br>the entire village.</span>
             </span>
           </div>
           <div class="sbl__row" data-sbl-row data-idx="2">
@@ -539,7 +558,7 @@
 
         <!-- МОРФ-ВИДЕО (v1): из фрейма секции 8 в верх-левую ячейку грида. -->
         <div class="s8__morph" data-morph>
-          <video class="s8__video" src="/video/grid-1.mp4" poster="/img/poster/grid-1.webp" muted loop playsinline preload="auto"></video>
+          <video class="s8__video" src="/video/grid-1.mp4" poster="/img/poster/grid-1.webp" muted loop playsinline preload="metadata"></video>
           <div class="s8__corners" data-morph-corners aria-hidden="true"><i></i><i></i><i></i><i></i></div>
         </div>
       </section>

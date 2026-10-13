@@ -7,6 +7,7 @@ import { initSmoothScroll } from './modules/smoothScroll.js';
 import { createFrameSequence } from './modules/frameSequence.js';
 import { createStage } from './modules/stage.js';
 import { splitText, initHeroReveal, initFadeReveal, initHeroIntro } from './modules/reveals.js';
+import { typograf } from './modules/typograf.js';
 import { initSoundToggle } from './modules/sound.js';
 import { initCursor } from './modules/cursor.js';
 import { initNavSplit, setNavTheme } from './modules/navSplit.js';
@@ -1092,7 +1093,17 @@ function initSectionEight() {
 
   measure();
   apply(0);
-  playAll();   // видео крутятся зациклено (autoplay muted); постер — на случай не загрузки
+  // Видео запускаем (и грузим) не сразу, а при подходе к секции — иначе четыре
+  // grid-ролика (~13 MB) тянутся на старте, хотя секция в самом низу. Запас в
+  // один экран (rootMargin) — чтобы к появлению уже крутились. Постер прикрывает.
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) { playAll(); io.disconnect(); }
+    }, { rootMargin: '100% 0px' });
+    io.observe(s);
+  } else {
+    playAll();
+  }
 
   const m = { p: 0 };
   gsap.timeline({
@@ -1161,6 +1172,7 @@ const app = {
   init() {
     const root = document.body;
 
+    typograf(root);   // микротипографика до разбивки заголовков на слова
     splitText(root);
     const lenis = initSmoothScroll();
     if (import.meta.env.DEV) { window.__lenis = lenis; window.__ST = ScrollTrigger; }
@@ -1171,8 +1183,16 @@ const app = {
     initBurger();
     initNav(lenis);
 
+    // Пока идёт прелоадер — блокируем скролл (иначе сайт прокручивается во
+    // время загрузки и финал выглядит некрасиво). Снимаем в onDone, когда
+    // морф завершён и hero показан.
+    lenis?.stop();
+    root.classList.add('is-preloading');
+
     runPreloader({
       onDone: (seq1, seq2Promise) => {
+        lenis?.start();
+        root.classList.remove('is-preloading');
         // Секция 1: полноэкранное видео, птичка улетает по скроллу (pin + scrub).
         // На мобилке кадры не грузятся (preloader вернул seq1 === null) — показываем
         // статичную картинку (.s1__poster), canvas и pin не инициализируем.

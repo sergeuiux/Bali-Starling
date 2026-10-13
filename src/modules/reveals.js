@@ -36,7 +36,9 @@ export function splitText(root) {
         parts.forEach((part) => {
           if (!part) return;
           if (/^\s+$/.test(part)) {
-            target.appendChild(document.createTextNode(' '));
+            // Сохраняем неразрывный пробел (из типографа / ручного &nbsp;),
+            // иначе предлог оторвётся и сможет повиснуть в конце строки.
+            target.appendChild(document.createTextNode(part.includes(' ') ? ' ' : ' '));
           } else {
             target.appendChild(wrapWord(part));
           }
@@ -163,32 +165,5 @@ export function initFadeReveal(root) {
         overwrite: true,
       });
     },
-  });
-}
-
-/**
- * Счётчики цифр по [data-count-to].
- * Целевое число сравнивается с текущим текстом; префикс "~" сохраняется.
- */
-export function initCounters(root) {
-  const nums = root.querySelectorAll('[data-count-to]');
-  nums.forEach((el, i) => {
-    const raw = (el.textContent || '').trim();
-    const prefix = raw.startsWith('~') ? '~' : '';
-    const target = Number(el.dataset.countTo);
-    if (Number.isNaN(target)) return;
-
-    const state = { v: 0 };
-    el.textContent = prefix + '0';
-
-    gsap.to(state, {
-      v: target,
-      duration: 1.6,
-      ease: 'power2.out',
-      delay: 0.35 + i * 0.15,
-      onUpdate: () => {
-        el.textContent = prefix + Math.round(state.v).toString();
-      },
-    });
   });
 }

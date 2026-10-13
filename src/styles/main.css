@@ -13,6 +13,8 @@
 :root {
   --blue: #0067C7;          /* лого-остров Bali, акцент-цифры */
   --accent: #CB3800;        /* оранжевый — play-иконка, активные пункты */
+  --accent-2: #F1531F;      /* ярко-оранжевый — маркеры/путь карты (s5) */
+  --bg-dark: #0E1219;       /* основной тёмный фон секций и прелоадера */
   --ink: #10151C;           /* тёмный текст (панель s2) */
   --ink-70: rgba(16, 21, 28, 0.7);
   --ink-55: rgba(16, 21, 28, 0.55);
@@ -64,57 +66,138 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: #0E1219;
+  background: var(--bg-dark);
   color: var(--white);
   transition: opacity 0.6s var(--easing), visibility 0.6s var(--easing);
 }
 .preloader.is-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+/* Пока идёт прелоадер — скролл сайта заблокирован (подстраховка нативного
+   скролла и клавиатуры вдобавок к lenis.stop()). */
+.is-preloading { overflow: hidden; }
 
-/* Окно-картинка: 320×320, строго по центру. Размер анимируется в морфе до
-   100vw/100vh; центрирование через left/top 50% + отрицательные margin,
-   поэтому рост окна остаётся симметричным от центра. */
+/* Окно-картинка: 320×320, центр на 30px выше середины экрана. Размер
+   анимируется в морфе до 100vw/100vh; центрирование через left/top 50% +
+   отрицательные margin (рост симметричен от центра). margin-top -190 =
+   -160 (половина окна) - 30 (подъём секции). */
 .pl__window {
   position: fixed;
   left: 50%;
   top: 50%;
   width: 320px;
   height: 320px;
-  margin: -160px 0 0 -160px;
+  margin: -190px 0 0 -160px;
   overflow: hidden;
+  background: var(--bg-dark);   /* подложка на случай зазоров при расширении окна */
   will-change: width, height, margin;
 }
-/* Слои картинок стопкой. Скрытый слой «срезан» снизу (clip-path),
-   при активации раскрывается шторкой снизу вверх. */
+/* Слои стопкой. Каждый слой — обёртка с clip-path: скрытый схлопнут в точку
+   по центру (inset 50%), при активации раскрывается до полного квадрата
+   (inset 0) — появление «из центра». */
 .pl__layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  will-change: clip-path;
+}
+.pl__layer.is-active { clip-path: inset(0%); }
+/* Внутренний слой-картинка: зум scale(1.5→1) синхронно с раскрытием клипа —
+   кадр «наполняет» квадрат (приём realevate.agency). */
+.pl__layer-img {
   position: absolute;
   inset: 0;
   background-size: cover;
   background-position: 50% 50%;
   background-repeat: no-repeat;
-  clip-path: inset(100% 0 0 0);        /* скрыт: срезан сверху */
+  transform: scale(1.5);
+  transform-origin: center center;
+  will-change: transform;
 }
-.pl__layer.is-active { clip-path: inset(0 0 0 0); }
-/* hero-слой: кадр frame_0001, кадрирован так, что птица видна в центре окна
-   (она в правой части кадра → показываем правую часть). В морфе
-   background-position анимируется к 50% — птица уезжает в hero-позицию. */
-.pl__layer--hero { background-position: 93% 50%; }
+.pl__layer.is-active .pl__layer-img { transform: scale(1); }
+/* hero-слой: кадр frame_0001, птица в правой части кадра → показываем правую
+   часть. В морфе background-position анимируется к 50%. */
+.pl__layer--hero .pl__layer-img { background-position: 93% 50%; }
 
-/* Счётчик под окном. */
-.pl__count {
+/* Рамка-линии 20px по краям (белый 10%, как на секциях сайта). */
+.pl__edge { position: fixed; background: var(--line-on-video); z-index: 2; }
+.pl__edge--l { left: 20px;    top: 0; bottom: 0; width: 1px; }
+.pl__edge--r { right: 20px;   top: 0; bottom: 0; width: 1px; }
+.pl__edge--t { top: 20px;     left: 0; right: 0; height: 1px; }
+.pl__edge--b { bottom: 20px;  left: 0; right: 0; height: 1px; }
+
+/* Подписи у картинки. Позиционируются от центра окна (левый край картинки =
+   50%-160, низ картинки = 50%+130). Гаснут в морфе. */
+.pl__cap {
   position: fixed;
-  left: 0; right: 0;
-  top: calc(50% + 200px);
-  text-align: center;
-  font-weight: 700;
-  font-size: 28px;
-  line-height: 1;
   color: var(--white);
-  font-variant-numeric: tabular-nums;
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  z-index: 2;
   will-change: opacity;
 }
+/* Rothschildi — горизонтально, 10px под картинкой, по левому краю картинки. */
+.pl__cap--h {
+  left: calc(50% - 160px);
+  top: calc(50% + 130px + 10px);
+}
+/* Leucopsar — вертикально (читается снизу вверх), 10px левее картинки,
+   низ выровнен по низу картинки. */
+.pl__cap--v {
+  right: calc(50% + 160px + 10px);
+  bottom: calc(50% - 130px);
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);   /* поворот вокруг центра — блок не сдвигается */
+}
+
+/* Цифры загрузки (правый нижний угол). Число — 32px bold, процент — 16px
+   regular, выровнены по базовой линии. Угол 100px от краёв. */
+.pl__num {
+  position: fixed;
+  right: var(--inner);
+  bottom: var(--inner);
+  display: flex;
+  align-items: baseline;
+  color: var(--white);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  will-change: opacity;
+  z-index: 2;
+}
+.pl__num > span:first-child { font-size: 32px; font-weight: 700; }
+.pl__pct { font-size: 16px; font-weight: 400; margin-left: 8px; }
+
+/* Линия загрузки. Трек слева 100px до зоны цифр; по вертикали — по низу цифр.
+   Белая полупрозрачная линия 1px (::before, по центру), поверх — красное
+   заполнение 3px бренда: выступает на 1px сверху и снизу от белой. */
+.pl__track {
+  position: fixed;
+  left: var(--inner);
+  right: calc(var(--inner) + 140px);
+  bottom: calc(var(--inner) + 4px);
+  height: 3px;
+  z-index: 2;
+}
+.pl__track::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 1px;
+  background: var(--line-on-video);
+}
+.pl__fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 0%;
+  background: var(--accent);
+}
+
 /* Мобилка: шоу не показываем — просто тёмный экран, быстро гаснет. */
 @media (max-width: 768px) {
-  .pl__window, .pl__count { display: none; }
+  .pl__window, .pl__num, .pl__track, .pl__cap, .pl__edge { display: none; }
 }
 
 /* ============================================================
@@ -141,7 +224,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .site-nav.on-s4,
 .site-nav.on-s5,
 .site-nav.on-s6 {
-  background: #0E1219;
+  background: var(--bg-dark);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 }
@@ -151,7 +234,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .site-nav.on-s7,
 .site-nav.on-s8,
 .site-nav.on-s9 {
-  background: #F2F7FD;
+  background: var(--bg-light);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 }
@@ -461,7 +544,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 /* Вертикальные линии 20px от краёв. white + mix-blend-difference + opacity 0.1 —
    даёт полупрозрачную линию 10%, инвертируемую по фону: над видео белая 10%,
-   над светлой панелью/шторками тёмная 10% (≈ #0E1219 10%). Работает, т.к. линии
+   над светлой панелью/шторками тёмная 10% (≈ var(--bg-dark) 10%). Работает, т.к. линии
    и фон в одном stacking context пиннящейся секции. */
 .s2::before, .s2::after {
   content: '';
@@ -575,7 +658,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 /* ============================================================
    SECTION 3 — collapse: птичка → тикеры + счётчики (numa-эффект)
-   Фон светлый → #0E1219, два тикера едут по скроллу.
+   Фон светлый → var(--bg-dark), два тикера едут по скроллу.
    ============================================================ */
 .s3 {
   position: relative;
@@ -606,7 +689,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   z-index: 1;
   min-height: 100vh;
   width: 100%;
-  background: #0E1219;
+  background: var(--bg-dark);
   color: var(--white);
   overflow: hidden;
 }
@@ -782,7 +865,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   z-index: 1;
   min-height: 100vh;
   width: 100%;
-  background: #0E1219;
+  background: var(--bg-dark);
   color: var(--white);
   overflow: hidden;
 }
@@ -873,7 +956,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   stroke-dasharray: 0.5 13;
 }
 .s5__trail {
-  stroke: #F1531F;
+  stroke: var(--accent-2);
   stroke-width: 7;
   stroke-linecap: round;
   stroke-dasharray: 0.5 13;
@@ -881,7 +964,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 /* Сплошной оранжевый след — проявляется в конце («закрашивается»). */
 .s5__trail-solid {
-  stroke: #F1531F;
+  stroke: var(--accent-2);
   stroke-width: 7;
   stroke-linecap: round;
   opacity: 0;
@@ -889,16 +972,16 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 
 /* Точка старта и бегущий маркер */
-.s5__start { fill: #F1531F; }
+.s5__start { fill: var(--accent-2); }
 .s5__marker-core {
-  fill: #ffffff;
-  stroke: #F1531F;
+  fill: var(--white);
+  stroke: var(--accent-2);
   stroke-width: 2;
 }
-.s5__marker-dot { fill: #F1531F; }
+.s5__marker-dot { fill: var(--accent-2); }
 .s5__marker-ring {
   fill: none;
-  stroke: #F1531F;
+  stroke: var(--accent-2);
   stroke-width: 2;
   transform-box: fill-box;
   transform-origin: center;
@@ -917,8 +1000,8 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   z-index: 3;
   pointer-events: none;
   background:
-    linear-gradient(180deg, #0E1219 0%, rgba(14, 18, 25, 0) 49.62%, #0E1219 100%),
-    linear-gradient(90deg, #0E1219 1.59%, rgba(14, 18, 25, 0) 49.7%, #0E1219 98.55%);
+    linear-gradient(180deg, var(--bg-dark) 0%, rgba(14, 18, 25, 0) 49.62%, var(--bg-dark) 100%),
+    linear-gradient(90deg, var(--bg-dark) 1.59%, rgba(14, 18, 25, 0) 49.7%, var(--bg-dark) 98.55%);
 }
 
 /* Уголки фрейма (30px от краёв), как в секции 2 */
@@ -965,7 +1048,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   font-weight: 275;
   font-size: 14px;
   line-height: 140%;         /* 19.6px */
-  color: #FFF;
+  color: var(--white);
   text-wrap: pretty;
 }
 /* Верхняя строка справа: SemiBold 24px, двухцветная. */
@@ -1054,7 +1137,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 [data-s6-wr], [data-s6-wr2] { transform-origin: right center; }
 /* белый слой поверх карточки (обрезается по её прямоугольнику в JS) */
 .s6__words--light { z-index: 4; }
-.s6__words--light .s6__word { color: #ffffff; }
+.s6__words--light .s6__word { color: var(--white); }
 
 /* Карточка-картинка (центр), растёт по скроллу; 5 фото стопкой (кроссфейд). */
 .s6__card {
@@ -1099,7 +1182,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   font-weight: 275;
   font-size: 16px;
   line-height: 140%;          /* 22.4px */
-  color: #0E1219;
+  color: var(--bg-dark);
   opacity: 0;
   z-index: 6;
 }
@@ -1202,7 +1285,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   font-weight: 700;
   font-size: 16px;
   line-height: 1.2;                        /* 19.2px */
-  color: #0E1219;
+  color: var(--bg-dark);
 }
 
 /* Блок строк: левая половина, от линии 20px до центра; прижат к низу (20px). */
@@ -1241,7 +1324,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .sbl__row:hover .sbl__fill {
   left: 0;
   right: 0;
-  background: #0E1219;
+  background: var(--bg-dark);
 }
 
 /* Текст: блок цифра+подпись по центру пункта (34px сверху/снизу). Цифра на x100
@@ -1269,7 +1352,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 .sbl__ct {
   margin: 0;
-  color: #0E1219;
+  color: var(--bg-dark);
   font-weight: 275;
   font-size: 16px;
   line-height: 1.3;                        /* 20.8px */
@@ -1284,7 +1367,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   left: 50%; right: 20px;
   top: 378px; bottom: 20px;
   overflow: hidden;
-  background: #0E1219;
+  background: var(--bg-dark);
 }
 .sbl__img {
   position: absolute;
@@ -1424,7 +1507,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   gap: 2px; z-index: 3;
 }
 .s9__cell {
-  position: relative; overflow: hidden; background: #0E1219;
+  position: relative; overflow: hidden; background: var(--bg-dark);
   opacity: 0;                      /* v2/v3/v4 проявляются в JS; slot остаётся 0 */
 }
 .s9__cell--slot { background: transparent; }
@@ -1478,7 +1561,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   width: 16px; height: 16px;
   margin: -8px 0 0 -8px;
   border-radius: 50%;
-  background: #ffffff;
+  background: var(--white);
   mix-blend-mode: difference;
   pointer-events: none;
   z-index: 9999;
@@ -1501,7 +1584,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   height: 100vh;
   z-index: 40;
   pointer-events: none;
-  background-color: #ffffff;
+  background-color: var(--white);
   mix-blend-mode: difference;
   -webkit-mask-image: url(/linear.svg);
           mask-image: url(/linear.svg);
@@ -1526,7 +1609,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 [data-split] .char { display: inline-block; }
 
 /* ============================================================
-   FOOTER (макет 431:21938 / 431:22638) — светлая плашка #F2F7FD.
+   FOOTER (макет 431:21938 / 431:22638) — светлая плашка var(--bg-light).
    Сверху крупная надпись Bali Starling в узкой рамке-маске (по скроллу
    проползает вверх); ниже — контент: слева лого FNPF + подписи, справа
    «Non-commercial project. 2026.». Шрифт — Poppins Light (в макете Manrope;
@@ -1539,7 +1622,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   position: fixed;
   inset: 0;
   z-index: 20;
-  background: #F2F7FD;
+  background: var(--bg-light);
   transform: translateY(100%);
   clip-path: inset(20px round 12px);
   will-change: transform, clip-path;
@@ -1795,7 +1878,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
     position: absolute; inset: 0;
     width: 100%; height: 100%;
     object-fit: cover;
-    object-position: calc(50% + 20px) 45%;   /* птичка чуть выше центра + на 20px правее */
+    object-position: calc(50% + 40px) 45%;   /* птичка чуть выше центра + на 40px правее */
   }
   .s1__overlay {
     background: linear-gradient(to bottom, rgba(14,18,25,0) 54%, rgba(14,18,25,0.5) 100%);
@@ -1846,7 +1929,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
     font-weight: 700;
     line-height: 100%;
     letter-spacing: 0;
-    color: #0E1219;
+    color: var(--bg-dark);
   }
   .s2__mark { display: block; width: 82px; height: auto; flex-shrink: 0; margin-top: 2px; }
   .s2__subtitle { display: none; }   /* в мобильном макете подзаголовка нет */
@@ -1904,14 +1987,14 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   .s2__fact {
     padding: 16px 20px;
     gap: 16px;
-    color: #0E1219;
+    color: var(--bg-dark);
   }
   .s2__fact:last-child { padding-bottom: 32px; }
-  .s2__fact-value { line-height: 100%; color: #0E1219; }
+  .s2__fact-value { line-height: 100%; color: var(--bg-dark); }
   .s2__fact--symbol .s2__fact-value { font-size: 20px; }
-  .s2__fact-label { font-weight: 300; color: #0E1219; }
+  .s2__fact-label { font-weight: 300; color: var(--bg-dark); }
   .s2__fact-value--num { font-size: 20px; }
-  .s2__unit { font-weight: 300; color: #0E1219; }
+  .s2__unit { font-weight: 300; color: var(--bg-dark); }
   .s2__coin { width: 48px; height: 48px; }
   .s2__coin + .s2__coin { margin-left: -10px; }
 
@@ -2045,21 +2128,21 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
     min-height: 0;
     display: block;
     padding: 0;
-    background: #0E1219;
+    background: var(--bg-dark);
   }
   /* Десктопные части — скрыть; показать мобильную. */
   .s5__head, .s5__frame, .s5__side, .s5__grad { display: none; }
-  .s5m { display: block; padding: 80px 20px 80px; color: #fff; }   /* верх 80px (+20px — заголовок не прижат) */
+  .s5m { display: block; padding: 80px 20px 80px; color: var(--white); }   /* верх 80px (+20px — заголовок не прижат) */
 
   .s5m__title {
     margin: 0;
     font-weight: 700;
     font-size: 32px;
     line-height: 100%;
-    color: #fff;
+    color: var(--white);
   }
   .s5m__title .s5__num { color: var(--accent); }
-  .s5m__sub { margin: 16px 0 0; font-weight: 300; font-size: 14px; line-height: 140%; color: #fff; }
+  .s5m__sub { margin: 16px 0 0; font-weight: 300; font-size: 14px; line-height: 140%; color: var(--white); }
 
   /* Карта: кроп map.webp (позиция map2), градиент-затухание по краям, уголки. */
   .s5m__map {
@@ -2068,7 +2151,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
     aspect-ratio: 320 / 231;
     border-radius: 8px;
     overflow: hidden;
-    background: #0E1219;
+    background: var(--bg-dark);
   }
   .s5m__img {
     position: absolute;
@@ -2079,17 +2162,17 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   .s5m__grad {
     position: absolute; inset: 0;
     background:
-      linear-gradient(to bottom, #0E1219 0%, rgba(14,18,25,0) 49.6%, #0E1219 100%),
-      linear-gradient(to right, #0E1219 1.6%, rgba(14,18,25,0) 49.7%, #0E1219 98.55%);
+      linear-gradient(to bottom, var(--bg-dark) 0%, rgba(14,18,25,0) 49.6%, var(--bg-dark) 100%),
+      linear-gradient(to right, var(--bg-dark) 1.6%, rgba(14,18,25,0) 49.7%, var(--bg-dark) 98.55%);
     pointer-events: none;
   }
   .s5m__svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .s5m__route { stroke: #fff; stroke-width: 0.5; stroke-dasharray: 1.1 1.1; }
+  .s5m__route { stroke: var(--white); stroke-width: 0.5; stroke-dasharray: 1.1 1.1; }
   .s5m__trail { stroke: var(--accent); stroke-width: 0.9; }
   .s5m__start { fill: var(--accent); }
   .s5m__marker-ring { fill: rgba(203, 56, 0, 0.22); }
   .s5m__marker-core { fill: var(--accent); }
-  .s5m__marker-dot  { fill: #fff; }
+  .s5m__marker-dot  { fill: var(--white); }
   .s5m__label {
     position: absolute;
     margin: 0;
@@ -2116,7 +2199,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
     font-weight: 300;
     font-size: 14px;
     line-height: 140%;
-    color: #fff;
+    color: var(--white);
   }
   /* Начертание и размер — как у абзаца выше (.s5m__p). */
   .s5m__result {
@@ -2124,7 +2207,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
     font-weight: 300;
     font-size: 14px;
     line-height: 140%;
-    color: #fff;
+    color: var(--white);
   }
   .s5m__result .s5__result-accent { color: var(--accent); }
 
@@ -2265,7 +2348,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
     opacity: 1 !important;
     transform: none !important;
   }
-  .s9__cell--slot { background: #0E1219; }
+  .s9__cell--slot { background: var(--bg-dark); }
 
   /* ---- FOOTER (макет 431:22638 / 431:22986) ---- */
   /* Мобилка (макет 464:5202): фон-кадр мельче, подписи столбиком слева. */

@@ -7,7 +7,15 @@
 // Мобилка: кадры не грузим, прелоадер просто тёмный и быстро гаснет.
 
 import { gsap } from 'gsap';
+import { CustomEase } from 'gsap/CustomEase';
 import { currentSize } from './breakpoint.js';
+
+gsap.registerPlugin(CustomEase);
+
+// Easing появления картинок — повтор кривой realevate.agency
+// cubic-bezier(0.18, 0.13, 0, 0.99): резкий старт, долгий мягкий хвост.
+const REVEAL_EASE = CustomEase.create('plReveal', 'M0,0 C0.18,0.13 0,0.99 1,1');
+const REVEAL_DUR = 0.9;
 
 const FRAMES_ROOT = `${import.meta.env.BASE_URL}frames`;
 
@@ -67,6 +75,11 @@ export async function runPreloader({ onDone } = {}) {
   // --- Десктоп: анимированный прелоадер ---
   const win = document.getElementById('plWindow');
   const countEl = document.getElementById('plCount');
+  const fillEl = document.getElementById('plFill');
+  const numEl = document.getElementById('plNum');
+  const trackEl = document.getElementById('plTrack');
+  const capV = document.getElementById('plCapV');
+  const capH = document.getElementById('plCapH');
   const heroLayer = document.getElementById('plHeroLayer');
   const layers = Array.from(document.querySelectorAll('.pl__layer'));
 
@@ -90,6 +103,7 @@ export async function runPreloader({ onDone } = {}) {
       onUpdate() {
         const v = Math.round(counterObj.v);
         if (countEl) countEl.textContent = v;
+        if (fillEl) fillEl.style.width = v + '%';   // заполнение линии загрузки
         // активировать максимальный слой, чей порог достигнут
         let target = 0;
         for (let i = 0; i < LAYER_AT.length; i++) if (v >= LAYER_AT[i]) target = i;
@@ -98,9 +112,15 @@ export async function runPreloader({ onDone } = {}) {
           const layer = layers[activeLayer];
           if (layer) {
             layer.classList.add('is-active');
+            const inner = layer.querySelector('.pl__layer-img');
+            // Появление «из центра»: квадрат раскрывается (clip 50%→0),
+            // картинка одновременно успокаивается (scale 1.5→1).
             gsap.fromTo(layer,
-              { clipPath: 'inset(100% 0 0 0)' },
-              { clipPath: 'inset(0% 0 0 0)', duration: 0.55, ease: 'power2.out' });
+              { clipPath: 'inset(50%)' },
+              { clipPath: 'inset(0%)', duration: REVEAL_DUR, ease: REVEAL_EASE });
+            if (inner) gsap.fromTo(inner,
+              { scale: 1.5 },
+              { scale: 1, duration: REVEAL_DUR, ease: REVEAL_EASE });
           }
         }
       },
@@ -112,9 +132,17 @@ export async function runPreloader({ onDone } = {}) {
   const [seq1] = await Promise.all([seq1Promise, counterDone]);
 
   // Морф: окно во весь экран, кадр переезжает в hero-позицию, счётчик гаснет.
+  const edges = Array.from(document.querySelectorAll('.pl__edge'));
+  const uiFade = [numEl, trackEl, capV, capH, ...edges].filter(Boolean);
+  // Нижние слои (светлые pre-картинки) гасим мгновенно перед расширением —
+  // иначе они растягиваются вместе с окном и по краям hero проглядывает
+  // белая рамка. Остаётся только hero-слой (frame_0001).
+  const lowerLayers = layers.slice(0, -1);
   await new Promise((resolve) => {
     gsap.timeline({ onComplete: resolve })
-      .to(countEl, { opacity: 0, duration: 0.3, ease: 'power1.out' }, 0)
+      .set(lowerLayers, { autoAlpha: 0 }, 0)
+      .to(fillEl, { width: '100%', duration: 0.4, ease: 'power1.out' }, 0)
+      .to(uiFade, { opacity: 0, duration: 0.3, ease: 'power1.out' }, 0)
       .to(win, {
         width: '100vw', height: '100vh',
         marginLeft: '-50vw', marginTop: '-50vh',

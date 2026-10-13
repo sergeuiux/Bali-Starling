@@ -6,9 +6,14 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
-// Пин через transform (а не position:fixed): синхронно с Lenis, без рассинхрона
-// на кадр при входе/выходе из фиксации (иначе секция прыгает на сотни px).
-ScrollTrigger.defaults({ pinType: 'transform' });
+// pinType по устройству:
+//  • Десктоп — 'transform': скролл сглаживает Lenis (колесо), и transform-пин
+//    идёт с ним синхронно, без рывка на сотни px при защёлкивании fixed.
+//  • Мобилка — 'fixed': скролл пальцем нативный (Lenis тач не перехватывает),
+//    а transform-пин обновляется в JS с лагом относительно нативной прокрутки —
+//    отсюда дрожание. position:fixed браузер держит нативно, без тряски.
+const isTouch = window.matchMedia('(max-width: 768px)').matches;
+ScrollTrigger.defaults({ pinType: isTouch ? 'fixed' : 'transform' });
 
 export function initSmoothScroll() {
   const lenis = new Lenis({
