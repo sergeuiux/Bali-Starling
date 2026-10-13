@@ -6,14 +6,12 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
-// pinType по устройству:
-//  • Десктоп — 'transform': скролл сглаживает Lenis (колесо), и transform-пин
-//    идёт с ним синхронно, без рывка на сотни px при защёлкивании fixed.
-//  • Мобилка — 'fixed': скролл пальцем нативный (Lenis тач не перехватывает),
-//    а transform-пин обновляется в JS с лагом относительно нативной прокрутки —
-//    отсюда дрожание. position:fixed браузер держит нативно, без тряски.
+// Пин через transform на всех устройствах. Чтобы на мобилке он не дёргался
+// и не давал рывка, скролл пальцем тоже отдаём Lenis (syncTouch ниже): тогда
+// и прокрутка, и пины идут одним механизмом (GSAP ticker) — синхронно.
+ScrollTrigger.defaults({ pinType: 'transform' });
+
 const isTouch = window.matchMedia('(max-width: 768px)').matches;
-ScrollTrigger.defaults({ pinType: isTouch ? 'fixed' : 'transform' });
 
 export function initSmoothScroll() {
   const lenis = new Lenis({
@@ -21,6 +19,11 @@ export function initSmoothScroll() {
     easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
     smoothWheel: true,
     wheelMultiplier: 0.85,                                     // ниже = меньше рывки на колесе
+    // Мобилка: Lenis управляет и скроллом пальцем (не только колесом) — палец
+    // двигает скролл плавно, пины (transform) идут синхронно, без дёрганья и
+    // рывка. syncTouchLerp — мягкость следования за пальцем (выше = «тяжелее»).
+    syncTouch: isTouch,
+    syncTouchLerp: 0.075,
     touchMultiplier: 1.4,
     lerp: 0.08,                                                 // плавность интерполяции
   });
