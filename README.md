@@ -73,6 +73,18 @@ npm run build      # прод-сборка в dist/
 npm run frames     # перенарезать WebP-кадры из assets/*.mp4 (нужны ffmpeg + cwebp)
 ```
 
+## Деплой
+
+Сайт опубликован на **GitHub Pages** по кастомному домену **https://balistarling.org** (HTTPS, редирект с `www`).
+
+- **Автодеплой:** push в `main` → GitHub Actions (`.github/workflows/deploy.yml`) собирает `npm run build` и публикует `dist/` на Pages. Репозиторий: `sergeuiux/Bali-Starling`.
+- **Домен:** `balistarling.org` куплен на Namecheap. В Vite `base: '/'` (сайт в корне домена, не в подпапке). Файл `public/CNAME` с `balistarling.org` попадает в сборку.
+- **DNS в Namecheap (Advanced DNS):**
+  - 4 × A-запись, host `@` → `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153` (IP GitHub Pages)
+  - CNAME, host `www` → `sergeuiux.github.io.`
+  - TXT `@` `v=spf1 …` — почтовый forwarding Namecheap, не трогать
+- **GitHub Pages:** custom domain `balistarling.org`, Enforce HTTPS включён (сертификат GitHub, автопродление).
+
 ## Дизайн-токены (из Figma page4)
 
 - **H1** (s1): Poppins Bold, 86px, line-height 1.0, белый
